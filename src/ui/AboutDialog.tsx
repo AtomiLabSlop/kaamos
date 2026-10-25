@@ -14,6 +14,9 @@ import { Button, Modal } from './controls';
  */
 export const FEEDBACK_URL = 'https://tally.so/r/0VQWxA?system={system}';
 
+/** The public source (AGPL-3.0 asks that users of the hosted app can reach it). */
+export const SOURCE_URL = 'https://github.com/AtomiLabSlop/kaamos';
+
 /** What an early user should know before relying on Kaamos. Keep it short and true. */
 const LIMITATIONS: string[] = [
   'Desktop browsers only. Built and tested mostly in Chrome and Safari on a Mac; Windows, Linux and Firefox have had less testing.',
@@ -59,7 +62,17 @@ export function AboutDialog() {
           give it materials, light it and render an image.{' '}
           <span className="text-ink">
             Your models never leave this computer; nothing is uploaded.
-          </span>
+          </span>{' '}
+          Kaamos is open source (AGPL-3.0):{' '}
+          <a
+            href={SOURCE_URL}
+            target="_blank"
+            rel="noopener"
+            className="text-amber underline underline-offset-2 hover:brightness-110"
+          >
+            source code on GitHub
+          </a>
+          .
         </p>
 
         <section>
