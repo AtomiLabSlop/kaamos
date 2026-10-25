@@ -1,0 +1,9 @@
+# Apache settings for the hosted copy.
+
+# The OpenCascade (STEP/IGES) and Draco decoders are WebAssembly. Browsers refuse
+# to stream-compile a .wasm that is not served as application/wasm.
+AddType application/wasm .wasm
+
+# Deliberately NOT set: Cross-Origin-Opener-Policy / Cross-Origin-Embedder-Policy.
+# Kaamos does not use SharedArrayBuffer or multithreaded wasm (checked), and COEP
+# would block any resource loaded from another origin.

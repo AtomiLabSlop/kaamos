@@ -1,0 +1,200 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ *
+   Design tokens
+
+   A five-step cool-neutral ramp. Inputs recess *darker* than the panel
+   they sit in (the convention in desktop 3D tools) rather than floating
+   as lighter cards. One accent — tungsten amber — reserved for light
+   and activity: slider fills, active tabs, selection, render actions.
+ * ------------------------------------------------------------------ */
+@theme {
+  --color-shell: #0d0e10;
+  --color-panel: #15171a;
+  --color-raised: #1c1f23;
+  --color-hover: #23272c;
+  --color-well: #0a0b0c;
+
+  --color-line: #2a2e33;
+  --color-line-strong: #3b4147;
+
+  --color-ink: #dfe2e6;
+  --color-ink-dim: #949aa1;
+  --color-ink-faint: #636a71;
+
+  --color-amber: #e8a33d;
+  --color-amber-dim: #a9761f;
+  --color-amber-wash: #e8a33d1a;
+
+  --color-danger: #d9643d;
+  --color-ok: #6fae72;
+
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI',
+    system-ui, sans-serif;
+
+  --text-micro: 10px;
+  --text-label: 11px;
+  --text-ctl: 12px;
+  --text-title: 13px;
+
+  --radius-sm: 2px;
+  --radius-md: 3px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  body {
+    background: var(--color-shell);
+    color: var(--color-ink);
+    font-family: var(--font-ui);
+    font-size: var(--text-ctl);
+    line-height: 1.35;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Numbers never reflow while a slider is being dragged. */
+  input,
+  button,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  [data-num],
+  input[type='text'],
+  input[type='number'] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-amber);
+    outline-offset: 1px;
+  }
+
+  button {
+    cursor: pointer;
+    background: none;
+    border: 0;
+    padding: 0;
+  }
+
+  button:disabled {
+    cursor: default;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2f343a;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3f454c;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2f343a transparent;
+  }
+
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+
+  /* Native colour swatch, stripped of its chrome. */
+  input[type='color'] {
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  input[type='color']::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  input[type='color']::-webkit-color-swatch {
+    border: 0;
+    border-radius: 1px;
+  }
+  input[type='color']::-moz-color-swatch {
+    border: 0;
+    border-radius: 1px;
+  }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  select {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+@layer utilities {
+  .scroll-y {
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .hairline-t {
+    border-top: 1px solid var(--color-line);
+  }
+  .hairline-b {
+    border-bottom: 1px solid var(--color-line);
+  }
+  .hairline-l {
+    border-left: 1px solid var(--color-line);
+  }
+  .hairline-r {
+    border-right: 1px solid var(--color-line);
+  }
+
+  .no-drag {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

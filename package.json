@@ -1,0 +1,44 @@
+{
+  "name": "kaamos",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "author": "AtomiLab",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser-based 3D product rendering studio",
+  "scripts": {
+    "start": "npm install --no-fund --no-audit && vite --open",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:web": "vite build --base=/kaamos/",
+    "typecheck": "tsc --noEmit",
+    "preview": "npm run build && vite preview --open",
+    "test:smoke": "node tests/smoke.mjs",
+    "check": "npm run build && node tests/smoke.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.1",
+    "occt-import-js": "^0.0.23",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "three": "^0.186.1",
+    "three-gpu-pathtracer": "^0.0.27",
+    "three-mesh-bvh": "^0.9.16",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "playwright": "^1.64.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4"
+  },
+  "overrides": {
+    "three-mesh-bvh": "^0.9.16"
+  }
+}
