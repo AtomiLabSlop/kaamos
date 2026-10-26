@@ -33,8 +33,10 @@ function AreaLightItem({
   // Aim at the subject rather than exposing raw rotation, which is far easier
   // to control from a properties panel.
   useEffect(() => {
-    ref.current?.lookAt(0, light.aimHeight, 0);
-  }, [light.position, light.aimHeight, light.width, light.height]);
+    const aim = light.aimPoint;
+    if (aim) ref.current?.lookAt(aim[0], aim[1], aim[2]);
+    else ref.current?.lookAt(0, light.aimHeight, 0);
+  }, [light.position, light.aimHeight, light.aimPoint, light.width, light.height]);
 
   useHelper(showHelper ? ref : false, RectAreaLightHelper);
 

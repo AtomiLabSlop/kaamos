@@ -136,6 +136,8 @@ export interface AreaLight {
   position: Vec3;
   /** Height on the Y axis the light aims at; X/Z of the aim point are 0. */
   aimHeight: number;
+  /** A point the light aims at instead of the vertical axis (set by placing a light on the model). */
+  aimPoint?: Vec3;
 }
 
 export type EnvPresetId =

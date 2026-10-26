@@ -96,6 +96,8 @@ interface UIState {
   dragMaterialId: string | null;
   /** True while the next viewport click chooses the depth-of-field focal point. */
   pickingFocus: boolean;
+  /** True while the next viewport click places a new light that lights the clicked spot. */
+  aimingLight: boolean;
   /** The viewport is being path traced rather than rasterised. */
   pathPreview: boolean;
   /** Samples accumulated so far by the path-traced preview. */
@@ -161,6 +163,7 @@ interface UIState {
   rebuildCanvas(): void;
   setDragMaterial(id: string | null): void;
   setPickingFocus(picking: boolean): void;
+  setAimingLight(placing: boolean): void;
   setPathPreview(on: boolean): void;
   setPathPreviewSamples(samples: number): void;
   setDropActive(active: boolean): void;
@@ -220,6 +223,7 @@ export const useUI = create<UIState>((set, get) => ({
   canvasEpoch: 0,
   dragMaterialId: null,
   pickingFocus: false,
+  aimingLight: false,
   pathPreview: false,
   pathPreviewSamples: 0,
   dropActive: false,
@@ -278,10 +282,18 @@ export const useUI = create<UIState>((set, get) => ({
   },
 
   setProjectTab(projectTab) {
-    set(projectTab === 'material' ? { projectTab } : { projectTab, paintBrush: false });
+    set(
+      projectTab === 'material'
+        ? { projectTab, aimingLight: false }
+        : { projectTab, paintBrush: false, aimingLight: projectTab === 'lighting' && get().aimingLight },
+    );
   },
   showProjectTab(projectTab) {
-    set(projectTab === 'material' ? { projectTab, rightOpen: true } : { projectTab, rightOpen: true, paintBrush: false });
+    set(
+      projectTab === 'material'
+        ? { projectTab, rightOpen: true, aimingLight: false }
+        : { projectTab, rightOpen: true, paintBrush: false, aimingLight: projectTab === 'lighting' && get().aimingLight },
+    );
   },
   setRenderWindowOpen(renderWindowOpen) {
     set({ renderWindowOpen });
@@ -342,6 +354,9 @@ export const useUI = create<UIState>((set, get) => ({
   },
   setPathPreviewSamples(pathPreviewSamples) {
     set({ pathPreviewSamples });
+  },
+  setAimingLight(aimingLight) {
+    set({ aimingLight });
   },
   setPickingFocus(pickingFocus) {
     set({ pickingFocus });

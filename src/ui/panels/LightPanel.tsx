@@ -27,6 +27,20 @@ export function LightPanel() {
 
   const selectedLightId = useUI((state) => state.selectedLightId);
   const selectLight = useUI((state) => state.selectLight);
+  const aimingLight = useUI((state) => state.aimingLight);
+  const setAimingLight = useUI((state) => state.setAimingLight);
+  const hasModel = useProject((state) => state.modelOrder.length > 0);
+
+  const togglePlacing = () => {
+    if (!aimingLight && !hasModel) {
+      useUI.getState().toast('info', 'No model yet', 'Import a model first, then click it to aim the light.');
+      return;
+    }
+    setAimingLight(!aimingLight);
+  };
+  const placeTip = aimingLight
+    ? 'Click the model to aim the light  ·  click here to cancel'
+    : 'Click a spot on the model  ·  the light moves to light that spot';
 
   const selected = lights.find((light) => light.id === selectedLightId) ?? lights[0];
 
@@ -115,7 +129,9 @@ export function LightPanel() {
         )}
 
         {lights.length > 0 && (
-          <Hint>Show where the lights sit with the light button under the viewport, or H.</Hint>
+          <Hint>
+            Show where the lights sit with the light button under the viewport, or H.
+          </Hint>
         )}
       </Section>
 
@@ -213,10 +229,10 @@ export function LightPanel() {
             />
             <Slider
               label="Aim height"
-              tip="The height on the model's vertical axis that the light points at."
+              tip="The height on the model's vertical axis that the light points at. Moving this puts the aim back on the axis, replacing a point picked on the model."
               value={selected.aimHeight}
               onChange={(aimHeight) =>
-                updateLight(selected.id, { aimHeight }, `light-${selected.id}-aim`)
+                updateLight(selected.id, { aimHeight, aimPoint: undefined }, `light-${selected.id}-aim`)
               }
               min={-2}
               max={4}
@@ -225,6 +241,9 @@ export function LightPanel() {
             />
 
             <div className="mt-2.5 flex gap-1.5">
+              <Button icon="target" active={aimingLight} tip={placeTip} onClick={togglePlacing}>
+                Aim light
+              </Button>
               <Button
                 icon="copy"
                 onClick={() => {

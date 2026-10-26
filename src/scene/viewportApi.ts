@@ -1,5 +1,6 @@
 import {
   Box3,
+  Matrix3,
   OrthographicCamera,
   PerspectiveCamera,
   Raycaster,
@@ -406,6 +407,43 @@ export function pickNodeAt(ndcX: number, ndcY: number): string | null {
       if (nodeId) return nodeId;
       current = current.parent;
     }
+  }
+  return null;
+}
+
+/**
+ * The model surface under a point of the view: where the ray lands, in world
+ * space, and the surface normal there, turned to face the camera. Null when the
+ * click lands on nothing.
+ */
+export function pickSurfaceAt(ndcX: number, ndcY: number): { point: Vec3; normal: Vec3 } | null {
+  const { scene, camera } = viewport;
+  if (!scene || !camera) return null;
+
+  pointer.set(ndcX, ndcY);
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(scene.children, true);
+
+  for (const hit of hits) {
+    if (!isShown(hit.object) || !hit.face) continue;
+    let current: Object3D | null = hit.object;
+    let owned = false;
+    while (current) {
+      if (nodeIdOf(current)) {
+        owned = true;
+        break;
+      }
+      current = current.parent;
+    }
+    if (!owned) continue;
+
+    const normal = hit.face.normal
+      .clone()
+      .applyNormalMatrix(new Matrix3().getNormalMatrix(hit.object.matrixWorld))
+      .normalize();
+    // A surface seen from behind (a sheet, a flipped part) still faces the viewer.
+    if (normal.dot(raycaster.ray.direction) > 0) normal.negate();
+    return { point: [hit.point.x, hit.point.y, hit.point.z], normal: [normal.x, normal.y, normal.z] };
   }
   return null;
 }

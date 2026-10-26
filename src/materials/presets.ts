@@ -363,7 +363,7 @@ export const MATERIAL_PRESETS: MaterialPreset[] = [
 
   /** A lightly tinted, clear liquid (pale whisky, tea): refracts like water, colours what passes through. */
   preset('amber-liquid', 'Liquid', 'example-bottle', {
-    color: '#f0c69e',
+    color: '#e0c8b0',
     metalness: 0,
     roughness: 0.03,
     transmission: 1,

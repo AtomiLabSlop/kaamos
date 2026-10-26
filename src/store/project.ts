@@ -145,7 +145,7 @@ export interface ProjectStore extends ProjectState {
   resetMaterial(id: string): void;
   deleteMaterial(id: string): void;
 
-  addLight(): string;
+  addLight(init?: Partial<Omit<AreaLight, 'id'>>): string;
   updateLight(id: string, patch: Partial<AreaLight>, label?: string): void;
   duplicateLight(id: string): string | null;
   removeLight(id: string): void;
@@ -459,7 +459,7 @@ export const useProject = create<ProjectStore>((set, get) => {
 
     /* ---------------- lights ---------------- */
 
-    addLight() {
+    addLight(init) {
       mark('add-light');
       const id = uid('light');
       const count = get().lights.length + 1;
@@ -473,6 +473,7 @@ export const useProject = create<ProjectStore>((set, get) => {
         height: 2,
         position: [2.2, 2.4, 2.2],
         aimHeight: 0.4,
+        ...init,
       };
       set({ lights: [...get().lights, light] });
       return id;

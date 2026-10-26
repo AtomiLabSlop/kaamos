@@ -115,7 +115,8 @@ function useShortcuts() {
           deleteSelectedNode();
           break;
         case 'escape':
-          if (useUI.getState().paintBrush) useUI.getState().setPaintBrush(false);
+          if (useUI.getState().aimingLight) useUI.getState().setAimingLight(false);
+          else if (useUI.getState().paintBrush) useUI.getState().setPaintBrush(false);
           else useUI.getState().selectNode(null);
           break;
         default: {

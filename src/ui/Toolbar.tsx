@@ -44,13 +44,13 @@ export function Toolbar() {
   const [draft, setDraft] = useState<string | null>(null);
 
   return (
-    <header className="flex h-11 shrink-0 items-center gap-1.5 border-b border-line bg-panel px-3">
+    <header className="flex h-11 shrink-0 items-center gap-1.5 border-b border-line bg-panel pl-4 pr-3">
       <Tip text="About Kaamos — known limitations and feedback">
         <button
           type="button"
           onClick={() => setAboutOpen(true)}
           aria-label="About Kaamos"
-          className="flex shrink-0 cursor-pointer items-center gap-2 rounded-sm pr-1.5 hover:opacity-80"
+          className="flex shrink-0 cursor-pointer items-center gap-3 rounded-sm pr-3 hover:opacity-80"
         >
           <img src={markUrl} alt="" width={28} height={28} className="h-[28px] w-[28px]" />
           <img src={wordmarkUrl} alt="Kaamos" height={17} className="relative -top-[2px] h-[17px] w-auto" />
@@ -60,7 +60,7 @@ export function Toolbar() {
         </button>
       </Tip>
 
-      <span className="mx-0.5 h-5 w-px bg-line" />
+      <span className="mx-2 h-5 w-px bg-line" />
 
       <input
         value={draft ?? name}

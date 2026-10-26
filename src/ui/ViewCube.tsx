@@ -20,7 +20,9 @@ import { Tip } from './controls';
  * in those same world axes, so its labels cannot disagree with what a click
  * does (and the keys 1–7 still pick the same standard views).
  *
- * At rest only the labels and the cube's outline are drawn. Hovering a zone
+ * At rest the labels, the cube's outline and a translucent panel-coloured fill
+ * are drawn; the fill keeps the cube readable over any background, light or
+ * dark. Hovering a zone
  * fills it in amber, and the fill runs across the faces it touches: a corner
  * lights up as one hexagon, an edge as one strip that bends round it. Every
  * cell carries its direction as a key, and all cells with the key under the
@@ -157,7 +159,7 @@ export function ViewCube() {
             ref={(el) => {
               faceEls.current[i] = el;
             }}
-            className="absolute grid border border-ink-dim/70"
+            className="absolute grid border border-ink-dim/70 bg-panel/70"
             style={{
               width: EDGE,
               height: EDGE,

@@ -1,7 +1,8 @@
 import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { SceneRoot } from '../scene/SceneRoot';
-import { pickDepthAt, pickNodeAt } from '../scene/viewportApi';
+import { pickDepthAt, pickNodeAt, pickSurfaceAt } from '../scene/viewportApi';
+import { lightForSpot } from '../scene/lightPlacement';
 import { worldToMm } from '../render/depthOfField';
 import { selectIsEmpty, useProject } from '../store/project';
 import { useUI } from '../store/ui';
@@ -140,6 +141,7 @@ export function Viewport() {
 
   const showFrame = useUI((state) => state.showFrame);
   const pickingFocus = useUI((state) => state.pickingFocus);
+  const aimingLight = useUI((state) => state.aimingLight);
   const viewTool = useUI((state) => state.viewTool);
   const paintBrush = useUI((state) => state.paintBrush);
   const pathPreview = useUI((state) => state.pathPreview);
@@ -216,6 +218,23 @@ export function Viewport() {
       return;
     }
 
+    // "Aim light": this click moves the selected light out along the surface
+    // normal of the clicked spot and aims it back at the spot.
+    if (ui.aimingLight) {
+      const surface = pickSurfaceAt(ndc.x, ndc.y);
+      if (!surface) {
+        ui.toast('info', 'Nothing there', 'Click on the model to place a light that lights that spot.');
+        return;
+      }
+      ui.setAimingLight(false);
+      const lights = useProject.getState().lights;
+      const id = ui.selectedLightId ?? lights[0]?.id;
+      if (!id) return;
+      useProject.getState().updateLight(id, lightForSpot(surface.point, surface.normal), `light-${id}-aim-spot`);
+      ui.toast('success', 'Light aimed', 'It now lights the spot you clicked. Fine-tune it with the sliders below.');
+      return;
+    }
+
     // With a view tool active the left button moves the view; it does not select.
     if (ui.viewTool !== 'select') return;
 
@@ -249,7 +268,7 @@ export function Viewport() {
     <div
       ref={host}
       className={`relative min-h-0 min-w-0 flex-1 bg-shell ${
-        pickingFocus ? 'cursor-crosshair' : paintBrush && viewTool === 'select' ? 'cursor-cell' : VIEW_TOOL_CURSOR[viewTool]
+        pickingFocus || aimingLight ? 'cursor-crosshair' : paintBrush && viewTool === 'select' ? 'cursor-cell' : VIEW_TOOL_CURSOR[viewTool]
       }`}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
