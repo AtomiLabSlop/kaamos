@@ -8,6 +8,7 @@ import {
   IconButton,
   Section,
   Slider,
+  TextInput,
 } from '../controls';
 import { Icon } from './../Icon';
 
@@ -122,13 +123,7 @@ export function LightPanel() {
         <>
           <Section title={selected.name}>
             <Field label="Name">
-              <input
-                value={selected.name}
-                onChange={(event) =>
-                  updateLight(selected.id, { name: event.target.value })
-                }
-                className="h-[22px] min-w-0 flex-1 rounded-sm border border-line bg-well px-1.5 text-ctl"
-              />
+              <TextInput label="Light name" value={selected.name} onChange={(name) => updateLight(selected.id, { name })} />
             </Field>
             <Field label="Colour">
               <ColorField

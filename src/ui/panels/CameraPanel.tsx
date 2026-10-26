@@ -29,6 +29,7 @@ import {
   Slider,
   Toggle,
 } from '../controls';
+import { TextField as S2TextField } from '@react-spectrum/s2';
 
 /**
  * The camera's position readouts, following the camera as it is orbited, panned,
@@ -326,7 +327,7 @@ export function CameraPanel() {
         )}
       </Section>
 
-      <Section title="Saved viewpoints" defaultOpen>
+      <Section title="Saved viewpoints">
         {viewpoints.length === 0 ? (
           <Hint>
             Save a view to come back to it later. Saved views travel with the project
@@ -340,12 +341,14 @@ export function CameraPanel() {
                 className="group flex h-[24px] items-center gap-1 rounded-sm px-1.5 hover:bg-hover"
               >
                 {renamingId === view.id ? (
-                  <input
+                  <S2TextField
+                    aria-label="View name"
+                    size="S"
                     autoFocus
                     defaultValue={view.name}
-                    onFocus={(event) => event.target.select()}
+                    onFocus={(event) => (event.target as HTMLInputElement).select()}
                     onBlur={(event) => {
-                      const next = event.target.value.trim();
+                      const next = (event.target as HTMLInputElement).value.trim();
                       if (next && !cancelRename.current) renameViewpoint(view.id, next);
                       cancelRename.current = false;
                       setRenamingId(null);
@@ -359,8 +362,7 @@ export function CameraPanel() {
                         (event.target as HTMLInputElement).blur();
                       }
                     }}
-                    aria-label="View name"
-                    className="h-[18px] min-w-0 flex-1 rounded-sm border border-amber-dim bg-well px-1 text-ctl"
+                    UNSAFE_style={{ flex: 1, minWidth: 0 }}
                   />
                 ) : (
                   <button

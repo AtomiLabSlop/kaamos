@@ -2,16 +2,36 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
-  useId,
-  useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import {
+  ActionButton as S2ActionButton,
+  Button as S2Button,
+  ButtonGroup as S2ButtonGroup,
+  Content as S2Content,
+  Dialog as S2Dialog,
+  Disclosure as S2Disclosure,
+  DisclosureHeader as S2DisclosureHeader,
+  DisclosurePanel as S2DisclosurePanel,
+  DisclosureTitle as S2DisclosureTitle,
+  DialogContainer as S2DialogContainer,
+  Heading as S2Heading,
+  NumberField as S2NumberField,
+  Picker as S2Picker,
+  PickerItem as S2PickerItem,
+  Slider as S2Slider,
+  Switch as S2Switch,
+  Text as S2Text,
+  TextField as S2TextField,
+  ToggleButton as S2ToggleButton,
+  ToggleButtonGroup as S2ToggleButtonGroup,
+} from '@react-spectrum/s2';
 import { createPortal } from 'react-dom';
-import { Icon, type IconName } from './Icon';
-import { clamp, fmt } from '../lib/util';
+import { Icon, spectrumIcon, type IconName } from './Icon';
+import { clamp } from '../lib/util';
 
 /* ------------------------------------------------------------------ *
    Tooltip
@@ -41,7 +61,7 @@ export function TooltipLayer({ children }: { children: ReactNode }) {
           <div
             role="tooltip"
             data-testid="tooltip"
-            className="pointer-events-none fixed bottom-3 left-3 z-100 w-[222px] whitespace-pre-line rounded-sm border border-amber bg-raised px-2.5 py-2 text-ctl leading-snug text-ink shadow-xl"
+            className="pointer-events-none fixed bottom-3 left-3 z-100 w-[248px] whitespace-pre-line rounded-lg border border-amber bg-raised px-3 py-2.5 text-ctl leading-snug text-ink shadow-xl"
           >
             {text}
           </div>,
@@ -82,20 +102,27 @@ export function Tip({ text, children }: { text?: string; children: ReactNode }) 
 }
 
 /* ------------------------------------------------------------------ *
-   Buttons
+   Buttons (Spectrum 2, 2.00.0-dev.4)
+
+   Same props as in 1.01.x, so every caller moved at once. Mapping:
+   primary = Spectrum's accent Button; default and ghost = ActionButton
+   (ghost is quiet), the toolbar-and-panel button of Spectrum's pro tools;
+   danger = negative outline Button. A button given `active` is a
+   ToggleButton (emphasized: amber when on). Kaamos's own icons are wrapped
+   with Spectrum's createIcon so they sit in the icon slot.
  * ------------------------------------------------------------------ */
 
 type ButtonTone = 'default' | 'primary' | 'danger' | 'ghost';
 
-const TONE: Record<ButtonTone, string> = {
-  default:
-    'bg-raised text-ink border border-line hover:bg-hover hover:border-line-strong',
-  primary:
-    'bg-amber text-shell border border-amber font-medium hover:brightness-110',
-  danger:
-    'bg-raised text-danger border border-line hover:border-danger hover:bg-hover',
-  ghost: 'text-ink-dim hover:text-ink hover:bg-hover border border-transparent',
-};
+function ButtonContent({ icon, children }: { icon?: IconName; children?: ReactNode }) {
+  const Glyph = icon ? spectrumIcon(icon) : null;
+  return (
+    <>
+      {Glyph && <Glyph />}
+      {children !== undefined && children !== null && children !== false && <S2Text>{children}</S2Text>}
+    </>
+  );
+}
 
 export function Button({
   children,
@@ -121,23 +148,54 @@ export function Button({
   /** Overrides the accessible name when the visible text is ambiguous. */
   label?: string;
 }) {
-  return (
-    <Tip text={tip}>
-      <button
-        type={type}
-        onClick={onClick}
-        disabled={disabled}
+  const content = <ButtonContent icon={icon}>{children}</ButtonContent>;
+  let button: ReactNode;
+  if (active !== undefined) {
+    button = (
+      <S2ToggleButton
+        size="S"
+        isEmphasized
+        isQuiet={tone === 'ghost'}
+        isSelected={active}
+        onChange={() => onClick?.()}
+        isDisabled={disabled}
         aria-label={label}
-        aria-pressed={active}
-        className={`inline-flex h-[26px] items-center gap-1.5 rounded-sm px-2 text-ctl whitespace-nowrap transition-colors disabled:opacity-35 ${
-          active ? 'bg-amber-wash! border-amber-dim! text-amber!' : ''
-        } ${TONE[tone]} ${className}`}
+        UNSAFE_className={`kaamos-emph ${className}`}
       >
-        {icon && <Icon name={icon} />}
-        {children}
-      </button>
-    </Tip>
-  );
+        {content}
+      </S2ToggleButton>
+    );
+  } else if (tone === 'primary' || tone === 'danger') {
+    button = (
+      <S2Button
+        size="S"
+        variant={tone === 'primary' ? 'accent' : 'negative'}
+        fillStyle={tone === 'primary' ? 'fill' : 'outline'}
+        type={type}
+        onPress={() => onClick?.()}
+        isDisabled={disabled}
+        aria-label={label}
+        UNSAFE_className={tone === 'primary' ? `kaamos-accent-fill ${className}` : className}
+      >
+        {content}
+      </S2Button>
+    );
+  } else {
+    button = (
+      <S2ActionButton
+        size="S"
+        isQuiet={tone === 'ghost'}
+        type={type}
+        onPress={() => onClick?.()}
+        isDisabled={disabled}
+        aria-label={label}
+        UNSAFE_className={className}
+      >
+        {content}
+      </S2ActionButton>
+    );
+  }
+  return <Tip text={tip}>{button}</Tip>;
 }
 
 export function IconButton({
@@ -148,7 +206,6 @@ export function IconButton({
   active,
   tone = 'ghost',
   size = 26,
-  iconSize,
   label,
 }: {
   icon: IconName;
@@ -158,25 +215,40 @@ export function IconButton({
   active?: boolean;
   tone?: ButtonTone;
   size?: number;
-  /** Drawn size of the icon itself; the default suits the 26 px button. */
+  /** Kept for callers; Spectrum sizes the icon from the button size. */
   iconSize?: number;
   label?: string;
 }) {
+  const Glyph = spectrumIcon(icon);
+  const s2size = size <= 22 ? 'XS' : size >= 30 ? 'M' : 'S';
+  const name = label ?? tip ?? icon;
+  const quiet = tone === 'ghost';
   return (
     <Tip text={tip}>
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        aria-label={label ?? tip ?? icon}
-        aria-pressed={active}
-        style={{ width: size, height: size }}
-        className={`inline-grid place-items-center rounded-sm transition-colors disabled:opacity-30 ${
-          active ? 'bg-amber/25! text-amber! ring-1 ring-amber ring-inset' : ''
-        } ${TONE[tone]}`}
-      >
-        <Icon name={icon} size={iconSize} />
-      </button>
+      {active !== undefined ? (
+        <S2ToggleButton
+          size={s2size}
+          isQuiet={quiet}
+          isEmphasized
+          isSelected={active}
+          onChange={() => onClick?.()}
+          isDisabled={disabled}
+          aria-label={name}
+          UNSAFE_className="kaamos-emph"
+        >
+          <Glyph />
+        </S2ToggleButton>
+      ) : (
+        <S2ActionButton
+          size={s2size}
+          isQuiet={quiet}
+          onPress={() => onClick?.()}
+          isDisabled={disabled}
+          aria-label={name}
+        >
+          <Glyph />
+        </S2ActionButton>
+      )}
     </Tip>
   );
 }
@@ -193,17 +265,43 @@ export function PanelTitle({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-line px-2.5">
-      <h2 className="text-title font-medium text-ink">{children}</h2>
+    <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-line px-3">
+      <h2 className="text-title font-semibold text-ink">{children}</h2>
       {actions && <div className="flex items-center gap-0.5">{actions}</div>}
     </div>
   );
 }
 
+/**
+ * Which sections the user has opened, by title. Kept for the whole visit and in
+ * this browser's localStorage, so a section opened once stays open when the
+ * selection, the tab or the page changes. Sections the caller opens and closes
+ * itself (the `open` prop) are not remembered here.
+ */
+const SECTION_MEMORY_KEY = 'kaamos.openSections';
+const openSections: Set<string> = (() => {
+  try {
+    const raw = localStorage.getItem(SECTION_MEMORY_KEY);
+    const list: unknown = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string') : []);
+  } catch {
+    return new Set<string>();
+  }
+})();
+function rememberSection(title: string, open: boolean) {
+  if (open) openSections.add(title);
+  else openSections.delete(title);
+  try {
+    localStorage.setItem(SECTION_MEMORY_KEY, JSON.stringify([...openSections]));
+  } catch {
+    // Storage blocked (private window): the memory lasts for this visit only.
+  }
+}
+
 export function Section({
   title,
   children,
-  defaultOpen = true,
+  defaultOpen = false,
   open: controlledOpen,
   onOpenChange,
   actions,
@@ -218,33 +316,39 @@ export function Section({
   actions?: ReactNode;
   hint?: string;
 }) {
-  const [innerOpen, setInnerOpen] = useState(defaultOpen);
+  // Spectrum Disclosure (quiet, compact). Its content is only mounted while
+  // open, as before, so a closed section costs nothing.
+  const [innerOpen, setInnerOpen] = useState(() => openSections.has(title) || defaultOpen);
   const open = controlledOpen ?? innerOpen;
-  const setOpen = (next: (value: boolean) => boolean) =>
-    onOpenChange ? onOpenChange(next(open)) : setInnerOpen(next);
+  const setOpen = (next: boolean) => {
+    if (onOpenChange) return onOpenChange(next);
+    rememberSection(title, next);
+    setInnerOpen(next);
+  };
   return (
-    <section className="border-b border-line">
-      <div className="flex h-7 items-center gap-1 pr-1.5">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="flex h-7 flex-1 items-center gap-1 pl-1.5 text-left text-label text-ink-dim hover:text-ink"
-          aria-expanded={open}
-        >
-          <Icon name={open ? 'chevronDown' : 'chevronRight'} size={12} />
-          {title}
-        </button>
+    <S2Disclosure
+      size="S"
+      density="regular"
+      isQuiet
+      isExpanded={open}
+      onExpandedChange={setOpen}
+      UNSAFE_className="kaamos-section"
+    >
+      <S2DisclosureHeader>
+        <S2DisclosureTitle>{title}</S2DisclosureTitle>
         {hint && (
           <Tip text={hint}>
-            <span className="grid size-4 place-items-center text-ink-faint">
-              <Icon name="info" size={12} />
+            <span className="grid size-6 shrink-0 place-items-center text-ink-faint">
+              <Icon name="info" size={13} />
             </span>
           </Tip>
         )}
-        {actions}
-      </div>
-      {open && <div className="px-2.5 pt-0.5 pb-3">{children}</div>}
-    </section>
+        {actions && <span className="flex shrink-0 items-center gap-0.5 pr-1">{actions}</span>}
+      </S2DisclosureHeader>
+      <S2DisclosurePanel>
+        {open && <div className="px-2.5 pt-0.5 pb-3">{children}</div>}
+      </S2DisclosurePanel>
+    </S2Disclosure>
   );
 }
 
@@ -266,6 +370,70 @@ export function Field({
       </Tip>
       <div className="flex min-w-0 flex-1 items-center gap-1.5">{children}</div>
     </div>
+  );
+}
+
+/** A single-line text field filling its row (names of materials, lights, parts). */
+export function TextInput({
+  value,
+  onChange,
+  label,
+  disabled,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  label: string;
+  disabled?: boolean;
+}) {
+  return (
+    <S2TextField
+      aria-label={label}
+      size="S"
+      value={value}
+      onChange={onChange}
+      isDisabled={disabled}
+      UNSAFE_style={{ flex: 1, minWidth: 0 }}
+    />
+  );
+}
+
+/**
+ * A row of quick values for a number (sample counts). The one equal to the
+ * current value shows as chosen; none does when the value is set elsewhere.
+ */
+export function PresetButtons({
+  values,
+  value,
+  onChange,
+  label,
+}: {
+  values: number[];
+  value: number;
+  onChange: (value: number) => void;
+  label: string;
+}) {
+  return (
+    <S2ToggleButtonGroup
+      aria-label={label}
+      size="XS"
+      density="compact"
+      isJustified
+      isEmphasized
+      selectionMode="single"
+      selectedKeys={values.includes(value) ? [String(value)] : []}
+      onSelectionChange={(keys) => {
+        const next = [...keys][0];
+        if (next !== undefined) onChange(Number(next));
+      }}
+      UNSAFE_className="mb-2.5"
+      UNSAFE_style={{ width: '100%' }}
+    >
+      {values.map((v) => (
+        <S2ToggleButton key={v} id={String(v)} UNSAFE_className="kaamos-emph">
+          <S2Text>{String(v)}</S2Text>
+        </S2ToggleButton>
+      ))}
+    </S2ToggleButtonGroup>
   );
 }
 
@@ -295,6 +463,7 @@ export function NumberInput({
   width = 54,
   suffix,
   disabled,
+  label,
 }: {
   value: number;
   onChange: (value: number) => void;
@@ -305,45 +474,24 @@ export function NumberInput({
   width?: number;
   suffix?: string;
   disabled?: boolean;
+  /** Accessible name, when the field has no visible label of its own. */
+  label?: string;
 }) {
-  const [draft, setDraft] = useState<string | null>(null);
-  const shown = draft ?? fmt(value, decimals);
-
-  const commit = (raw: string) => {
-    const parsed = Number.parseFloat(raw);
-    setDraft(null);
-    if (Number.isFinite(parsed)) onChange(clamp(parsed, min, max));
-  };
-
+  // Spectrum NumberField: commits on Enter or blur, arrow keys step by `step`.
   return (
-    <span className="inline-flex items-center gap-1">
-      <input
-        type="text"
-        inputMode="decimal"
-        value={shown}
-        disabled={disabled}
-        style={{ width }}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={(event) => commit(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            commit((event.target as HTMLInputElement).value);
-            (event.target as HTMLInputElement).blur();
-          } else if (event.key === 'Escape') {
-            setDraft(null);
-            (event.target as HTMLInputElement).blur();
-          } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-            event.preventDefault();
-            const direction = event.key === 'ArrowUp' ? 1 : -1;
-            const scale = event.shiftKey ? 10 : 1;
-            setDraft(null);
-            onChange(clamp(value + direction * step * scale, min, max));
-          }
-        }}
-        /* shrink-0: the width is set in pixels, and without this flex squeezes
-           the field in a narrow panel until "1600" is clipped to "16" — which
-           reads as wrong data rather than as a layout problem. */
-        className="h-[22px] shrink-0 rounded-sm border border-line bg-well px-1.5 text-right text-ctl text-ink tabular-nums disabled:opacity-40"
+    <span className="inline-flex shrink-0 items-center gap-1">
+      <S2NumberField
+        aria-label={label ?? (suffix ? `Value in ${suffix}` : 'Value')}
+        size="S"
+        hideStepper
+        isDisabled={disabled}
+        value={value}
+        minValue={Number.isFinite(min) ? min : undefined}
+        maxValue={Number.isFinite(max) ? max : undefined}
+        step={step}
+        formatOptions={{ maximumFractionDigits: decimals, useGrouping: false }}
+        onChange={(next) => Number.isFinite(next) && onChange(clamp(next, min, max))}
+        UNSAFE_style={{ width: Math.max(width, 56) + 10 }}
       />
       {suffix && <span className="text-label text-ink-faint">{suffix}</span>}
     </span>
@@ -351,12 +499,38 @@ export function NumberInput({
 }
 
 /* ------------------------------------------------------------------ *
-   Slider
+   Slider (Spectrum 2)
 
-   A thin track under the label row, with the value always readable and always
-   editable. Dragging anywhere on the track works, shift fines the step down,
-   and double-clicking returns the control to its default.
+   Spectrum's Slider for the track, with Kaamos's label row above it: the
+   label (with its hover help) on the left and an editable Spectrum
+   NumberField on the right, so the value stays readable and editable.
+   Spectrum's own read-only value output is hidden (.kaamos-slider output in
+   index.css). Holding Shift fines the step to a quarter while dragging, and
+   double-clicking the track returns the default. onChange fires on every
+   move, as before, so the imperative material path stays live while dragging.
  * ------------------------------------------------------------------ */
+
+let shiftHeld = false;
+const shiftListeners = new Set<() => void>();
+function setShift(next: boolean) {
+  if (next === shiftHeld) return;
+  shiftHeld = next;
+  shiftListeners.forEach((l) => l());
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', (e) => setShift(e.shiftKey));
+  window.addEventListener('keyup', (e) => setShift(e.shiftKey));
+  window.addEventListener('blur', () => setShift(false));
+}
+function useShiftHeld() {
+  return useSyncExternalStore(
+    (l) => {
+      shiftListeners.add(l);
+      return () => shiftListeners.delete(l);
+    },
+    () => shiftHeld,
+  );
+}
 
 export function Slider({
   label,
@@ -385,107 +559,44 @@ export function Slider({
   suffix?: string;
   note?: string;
 }) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-  const id = useId();
-
-  const fraction = clamp((value - min) / (max - min || 1), 0, 1);
-
-  const quantize = (raw: number, fine: boolean) => {
-    const effective = fine ? step / 4 : step;
-    const snapped = Math.round(raw / effective) * effective;
-    // Keep float noise out of the displayed value.
-    return clamp(Number(snapped.toFixed(6)), min, max);
-  };
-
-  const fromPointer = (clientX: number, fine: boolean) => {
-    const rect = trackRef.current?.getBoundingClientRect();
-    if (!rect || rect.width === 0) return;
-    const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
-    onChange(quantize(min + ratio * (max - min), fine));
-  };
-
-  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (disabled) return;
-    dragging.current = true;
-    (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
-    fromPointer(event.clientX, event.shiftKey);
-  };
-
-  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragging.current || disabled) return;
-    fromPointer(event.clientX, event.shiftKey);
-  };
-
-  const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    dragging.current = false;
-    (event.target as HTMLElement).releasePointerCapture?.(event.pointerId);
-  };
-
-  const onKeyDown = (event: React.KeyboardEvent) => {
-    if (disabled) return;
-    const scale = event.shiftKey ? 10 : 1;
-    if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
-      event.preventDefault();
-      onChange(quantize(value + step * scale, false));
-    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
-      event.preventDefault();
-      onChange(quantize(value - step * scale, false));
-    } else if (event.key === 'Home') {
-      event.preventDefault();
-      onChange(min);
-    } else if (event.key === 'End') {
-      event.preventDefault();
-      onChange(max);
-    }
-  };
+  const fine = useShiftHeld();
+  const tidy = (v: number) => clamp(Number(v.toFixed(6)), min, max);
 
   return (
-    <div className={`mb-2.5 last:mb-0 ${disabled ? 'opacity-45' : ''}`}>
+    <div className="kaamos-slider mb-2.5 last:mb-0">
       <div className="flex items-center justify-between gap-2">
         <Tip text={tip}>
-          <label htmlFor={id} className="truncate text-label text-ink-dim">
-            {label}
-          </label>
+          <span className={`truncate text-label ${disabled ? 'text-ink-faint' : 'text-ink-dim'}`}>{label}</span>
         </Tip>
-        <NumberInput
-          value={value}
-          onChange={(next) => onChange(clamp(next, min, max))}
-          min={min}
-          max={max}
-          step={step}
-          decimals={decimals}
-          disabled={disabled}
-          suffix={suffix}
-        />
+        <span className="inline-flex shrink-0 items-center gap-1">
+          <S2NumberField
+            aria-label={label}
+            size="S"
+            hideStepper
+            isDisabled={disabled}
+            value={value}
+            minValue={min}
+            maxValue={max}
+            step={step}
+            formatOptions={{ maximumFractionDigits: decimals, useGrouping: false }}
+            onChange={(next) => Number.isFinite(next) && onChange(tidy(next))}
+            UNSAFE_style={{ width: 64 }}
+          />
+          {suffix && <span className="text-label text-ink-faint">{suffix}</span>}
+        </span>
       </div>
-
-      <div
-        ref={trackRef}
-        id={id}
-        role="slider"
-        tabIndex={disabled ? -1 : 0}
-        aria-label={label}
-        aria-valuenow={Number(value.toFixed(decimals))}
-        aria-valuemin={min}
-        aria-valuemax={max}
-        aria-disabled={disabled}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onKeyDown={onKeyDown}
-        onDoubleClick={() => defaultValue !== undefined && onChange(defaultValue)}
-        className={`relative mt-1.5 h-3 touch-none ${disabled ? '' : 'cursor-ew-resize'}`}
-      >
-        <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-well ring-1 ring-line ring-inset" />
-        <div
-          className="absolute top-1/2 left-0 h-[3px] -translate-y-1/2 rounded-full bg-amber"
-          style={{ width: `${fraction * 100}%` }}
-        />
-        <div
-          className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-shell bg-ink"
-          style={{ left: `${fraction * 100}%` }}
+      <div onDoubleClick={() => !disabled && defaultValue !== undefined && onChange(defaultValue)}>
+        <S2Slider
+          aria-label={label}
+          size="S"
+          isEmphasized
+          isDisabled={disabled}
+          value={clamp(value, min, max)}
+          minValue={min}
+          maxValue={max}
+          step={fine ? step / 4 : step}
+          onChange={(next) => onChange(tidy(next))}
+          UNSAFE_style={{ width: '100%' }}
         />
       </div>
       {note && <Hint>{note}</Hint>}
@@ -546,18 +657,19 @@ export function ColorField({
           className="size-[16px] rounded-[1px]"
         />
       </span>
-      <input
-        type="text"
+      <S2TextField
+        aria-label="Hex colour"
+        size="S"
         value={draft ?? value}
-        disabled={disabled}
-        spellCheck={false}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={(event) => commit(event.target.value)}
+        isDisabled={disabled}
+        spellCheck="false"
+        onChange={setDraft}
+        onBlur={(event) => commit((event.target as HTMLInputElement).value)}
         onKeyDown={(event) => {
           if (event.key === 'Enter') commit((event.target as HTMLInputElement).value);
           if (event.key === 'Escape') setDraft(null);
         }}
-        className="h-[22px] w-[74px] rounded-sm border border-line bg-well px-1.5 text-ctl text-ink tabular-nums disabled:opacity-40"
+        UNSAFE_style={{ width: 92 }}
       />
     </span>
   );
@@ -573,31 +685,31 @@ export function Select<T extends string>({
   options,
   disabled,
   flex = true,
+  label,
 }: {
   value: T;
   onChange: (value: T) => void;
   options: { value: T; label: string }[];
   disabled?: boolean;
   flex?: boolean;
+  /** Accessible name (the Field's label); without it, the chosen option. */
+  label?: string;
 }) {
   return (
-    <span className={`relative inline-flex items-center ${flex ? 'flex-1' : ''}`}>
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value as T)}
-        className="h-[22px] w-full rounded-sm border border-line bg-well pr-5 pl-1.5 text-ctl text-ink disabled:opacity-40"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <span className="pointer-events-none absolute right-1 text-ink-faint">
-        <Icon name="chevronDown" size={12} />
-      </span>
-    </span>
+    <S2Picker
+      aria-label={label ?? options.find((o) => o.value === value)?.label ?? 'Choose'}
+      size="S"
+      isDisabled={disabled}
+      value={value}
+      onChange={(key) => key !== null && onChange(String(key) as T)}
+      UNSAFE_style={flex ? { flex: 1, minWidth: 0 } : undefined}
+    >
+      {options.map((option) => (
+        <S2PickerItem key={option.value} id={option.value} textValue={option.label}>
+          {option.label}
+        </S2PickerItem>
+      ))}
+    </S2Picker>
   );
 }
 
@@ -613,26 +725,21 @@ export function Toggle({
   disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
+    <S2Switch
+      size="S"
+      isEmphasized
+      isSelected={checked}
+      onChange={onChange}
+      isDisabled={disabled}
       aria-label={label}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative h-[16px] w-[28px] shrink-0 rounded-full border transition-colors disabled:opacity-40 ${
-        checked ? 'border-amber-dim bg-amber' : 'border-line bg-well'
-      }`}
-    >
-      <span
-        className={`absolute top-[1px] size-[12px] rounded-full transition-all ${
-          checked ? 'left-[13px] bg-shell' : 'left-[1px] bg-ink-faint'
-        }`}
-      />
-    </button>
+    />
   );
 }
 
+/**
+ * Exclusive choice of two to four options. A Spectrum ToggleButtonGroup rather
+ * than SegmentedControl: its buttons can each carry Kaamos's hover help.
+ */
 export function Segmented<T extends string>({
   value,
   onChange,
@@ -642,29 +749,33 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
   options: { value: T; label: string; tip?: string }[];
 }) {
+  // Long label sets (Gradient / Colour / Environment) drop to Spectrum's XS
+  // size so every label stays whole in the 336 px panel.
+  const long = options.reduce((n, o) => n + o.label.length, 0) > 20;
   return (
-    <div
-      role="radiogroup"
-      className="flex flex-1 gap-px rounded-sm border border-line bg-well p-px"
+    <S2ToggleButtonGroup
+      aria-label={options.map((o) => o.label).join(' or ')}
+      size={long ? 'XS' : 'S'}
+      density="compact"
+      isJustified={!long}
+      isEmphasized
+      selectionMode="single"
+      disallowEmptySelection
+      selectedKeys={[value]}
+      onSelectionChange={(keys) => {
+        const next = [...keys][0];
+        if (next !== undefined && next !== value) onChange(String(next) as T);
+      }}
+      UNSAFE_style={{ flex: 1, minWidth: 0 }}
     >
       {options.map((option) => (
         <Tip key={option.value} text={option.tip}>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={value === option.value}
-            onClick={() => onChange(option.value)}
-            className={`h-[20px] flex-1 rounded-[2px] px-1 text-label whitespace-nowrap transition-colors ${
-              value === option.value
-                ? 'bg-raised text-amber'
-                : 'text-ink-dim hover:text-ink'
-            }`}
-          >
-            {option.label}
-          </button>
+          <S2ToggleButton id={option.value} UNSAFE_className="kaamos-emph">
+            <S2Text>{option.label}</S2Text>
+          </S2ToggleButton>
         </Tip>
       ))}
-    </div>
+    </S2ToggleButtonGroup>
   );
 }
 
@@ -692,27 +803,21 @@ export function Vector3Field({
       {value.map((component, index) => (
         <span key={index} className="flex min-w-0 flex-1 items-center gap-1">
           <span className="text-label text-ink-faint">{labels[index]}</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={fmt(component, decimals)}
-            disabled={disabled}
-            onChange={(event) => {
-              const parsed = Number.parseFloat(event.target.value);
-              if (!Number.isFinite(parsed)) return;
-              const next = [...value] as [number, number, number];
-              next[index] = parsed;
-              onChange(next);
+          <S2NumberField
+            aria-label={labels[index]}
+            size="S"
+            hideStepper
+            isDisabled={disabled}
+            value={component}
+            step={step}
+            formatOptions={{ maximumFractionDigits: decimals, useGrouping: false }}
+            onChange={(next) => {
+              if (!Number.isFinite(next)) return;
+              const updated = [...value] as [number, number, number];
+              updated[index] = next;
+              onChange(updated);
             }}
-            onKeyDown={(event) => {
-              if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
-              event.preventDefault();
-              const direction = event.key === 'ArrowUp' ? 1 : -1;
-              const next = [...value] as [number, number, number];
-              next[index] = component + direction * step * (event.shiftKey ? 10 : 1);
-              onChange(next);
-            }}
-            className="h-[22px] w-full min-w-0 rounded-sm border border-line bg-well px-1 text-right text-ctl text-ink tabular-nums disabled:opacity-40"
+            UNSAFE_style={{ width: '100%', minWidth: 0 }}
           />
         </span>
       ))}
@@ -738,46 +843,18 @@ export function Modal({
   /** A wider panel for reading text rather than answering a question. */
   wide?: boolean;
 }) {
-  const panel = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  useLayoutEffect(() => {
-    panel.current?.querySelector<HTMLElement>('button, input')?.focus();
-  }, []);
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-90 grid place-items-center bg-black/55 p-4"
-      onPointerDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        ref={panel}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={`w-full ${wide ? 'max-w-[480px]' : 'max-w-[380px]'} rounded-md border border-line-strong bg-panel shadow-2xl`}
-      >
-        <div className="flex h-9 items-center justify-between border-b border-line px-3">
-          <h2 className="text-title font-medium">{title}</h2>
-          <IconButton icon="close" onClick={onClose} tip="Close" size={22} />
-        </div>
-        <div className="px-3 py-3 text-ctl leading-relaxed text-ink-dim">{children}</div>
-        {footer && (
-          <div className="flex justify-end gap-1.5 border-t border-line px-3 py-2.5">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>,
-    document.body,
+  // Spectrum Dialog: Esc calls onClose and focus is trapped inside. Spectrum
+  // hides a dialog's ButtonGroup when it is dismissible (close button + click
+  // outside), so only a dialog without footer buttons is made dismissible.
+  return (
+    <S2DialogContainer onDismiss={onClose}>
+      <S2Dialog isDismissible={!footer} size={wide ? 'M' : 'S'}>
+        <S2Heading slot="title">{title}</S2Heading>
+        <S2Content>
+          <div className="text-ctl leading-relaxed text-ink-dim">{children}</div>
+        </S2Content>
+        {footer && <S2ButtonGroup>{footer}</S2ButtonGroup>}
+      </S2Dialog>
+    </S2DialogContainer>
   );
 }

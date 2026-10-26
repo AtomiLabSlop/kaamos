@@ -3,7 +3,8 @@ import { selectRootIds, useProject, useRootIds, useSceneStats } from '../store/p
 import { useUI } from '../store/ui';
 import { formatCount } from '../lib/util';
 import { Icon } from './Icon';
-import { Button, EmptyNote, PanelTitle, Tip } from './controls';
+import { Button, EmptyNote, IconButton, PanelTitle } from './controls';
+import { TextField as S2TextField } from '@react-spectrum/s2';
 
 /**
  * Scene hierarchy.
@@ -99,10 +100,10 @@ function Row({ id, depth }: { id: string; depth: number }) {
     <>
       <div
         data-node-row={id}
-        className={`group relative flex h-[23px] select-none items-center gap-1 pr-1 ${
+        className={`group relative mx-1 flex h-[30px] select-none items-center gap-1.5 rounded-md pr-0.5 ${
           selected ? 'bg-amber-wash' : 'hover:bg-hover'
-        } ${dropTarget && dragMaterialId ? 'ring-1 ring-amber ring-inset' : ''}`}
-        style={{ paddingLeft: 4 + depth * 11 }}
+        } ${dropTarget && dragMaterialId ? 'ring-2 ring-amber ring-inset' : ''}`}
+        style={{ paddingLeft: 4 + depth * 14 }}
         onPointerEnter={() => dragMaterialId && setDropTarget(true)}
         onPointerLeave={() => setDropTarget(false)}
         onPointerUp={() => {
@@ -116,34 +117,36 @@ function Row({ id, depth }: { id: string; depth: number }) {
             onClick={() => toggleExpanded(id)}
             aria-label={expanded ? 'Collapse' : 'Expand'}
             aria-expanded={expanded}
-            className="grid size-[14px] shrink-0 place-items-center text-ink-faint hover:text-ink"
+            className="grid size-[18px] shrink-0 place-items-center rounded-sm text-ink-faint hover:text-ink"
           >
-            <Icon name={expanded ? 'chevronDown' : 'chevronRight'} size={11} />
+            <Icon name={expanded ? 'chevronDown' : 'chevronRight'} size={13} />
           </button>
         ) : (
-          <span className="size-[14px] shrink-0" />
+          <span className="size-[18px] shrink-0" />
         )}
 
         <span
           className={`shrink-0 ${selected ? 'text-amber' : 'text-ink-faint'}`}
           aria-hidden="true"
         >
-          <Icon name={node.kind === 'group' ? 'folder' : 'cube'} size={12} />
+          <Icon name={node.kind === 'group' ? 'folder' : 'cube'} size={15} />
         </span>
 
         {editing ? (
-          <input
+          <S2TextField
+            aria-label="Object name"
+            size="S"
             autoFocus
             defaultValue={node.name}
             onBlur={(event) => {
-              renameNode(id, event.target.value.trim() || node.name);
+              renameNode(id, (event.target as HTMLInputElement).value.trim() || node.name);
               setEditing(false);
             }}
             onKeyDown={(event) => {
               if (event.key === 'Enter') (event.target as HTMLInputElement).blur();
               if (event.key === 'Escape') setEditing(false);
             }}
-            className="h-[18px] min-w-0 flex-1 rounded-sm border border-amber-dim bg-well px-1 text-ctl"
+            UNSAFE_style={{ flex: 1, minWidth: 0 }}
           />
         ) : (
           <button
@@ -165,18 +168,19 @@ function Row({ id, depth }: { id: string; depth: number }) {
           </span>
         )}
 
-        <Tip text={node.visible ? 'Hide' : 'Show'}>
-          <button
-            type="button"
+        <span
+          className={`shrink-0 ${
+            node.visible ? 'opacity-0 group-hover:opacity-100 focus-within:opacity-100' : ''
+          }`}
+        >
+          <IconButton
+            icon={node.visible ? 'eye' : 'eyeOff'}
+            size={22}
+            tip={node.visible ? 'Hide' : 'Show'}
+            label={node.visible ? `Hide ${node.name}` : `Show ${node.name}`}
             onClick={() => setNodeVisible(id, !node.visible)}
-            aria-label={node.visible ? `Hide ${node.name}` : `Show ${node.name}`}
-            className={`grid size-[18px] shrink-0 place-items-center rounded-sm text-ink-faint hover:text-ink ${
-              node.visible ? 'opacity-0 group-hover:opacity-100 focus:opacity-100' : ''
-            }`}
-          >
-            <Icon name={node.visible ? 'eye' : 'eyeOff'} size={12} />
-          </button>
-        </Tip>
+          />
+        </span>
 
       </div>
 

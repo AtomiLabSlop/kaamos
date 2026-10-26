@@ -45,7 +45,7 @@ export function Hud({
   return (
     <div
       aria-label="Heads-up display"
-      className="pointer-events-none rounded-sm border border-line bg-panel/80 px-2 py-1.5 backdrop-blur-sm"
+      className="pointer-events-none rounded-lg border border-line bg-panel/80 px-2.5 py-2 backdrop-blur-sm"
     >
       <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 text-micro leading-tight">
         {rows.map(([label, value]) => (

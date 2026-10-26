@@ -1,3 +1,6 @@
+import type { FunctionComponent, SVGProps } from 'react';
+import { createIcon } from '@react-spectrum/s2';
+import type { IconProps } from '@react-spectrum/s2';
 /**
  * A small stroke icon set, drawn inline.
  *
@@ -6,7 +9,7 @@
  * consistency matters more at this size than breadth of choice.
  */
 
-const PATHS = {
+export const PATHS = {
   import: 'M8 2v6.5M5.5 6 8 8.5 10.5 6M3 10.5V13h10v-2.5',
   export: 'M8 9V2.5M5.5 5 8 2.5 10.5 5M3 10.5V13h10v-2.5',
   save: 'M3 3h7l3 3v7H3zM5.5 3v3h4V3M5.5 13V9.5h5V13',
@@ -101,4 +104,30 @@ export function Icon({
       <path d={PATHS[name]} />
     </svg>
   );
+}
+
+/**
+ * The same glyph as a Spectrum 2 icon, so it takes the size, colour and slot
+ * Spectrum buttons give their icons. One component per name, made once.
+ */
+const spectrumIcons = new Map<IconName, FunctionComponent<IconProps>>();
+export function spectrumIcon(name: IconName): FunctionComponent<IconProps> {
+  let made = spectrumIcons.get(name);
+  if (!made) {
+    made = createIcon((props: SVGProps<SVGSVGElement>) => (
+      <svg
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.25}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <path d={PATHS[name]} />
+      </svg>
+    ));
+    spectrumIcons.set(name, made);
+  }
+  return made;
 }

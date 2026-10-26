@@ -1,4 +1,5 @@
 import { MaterialLibrary } from './MaterialLibrary';
+import { PanelTitle } from './controls';
 
 /**
  * The Materials window (left): the material presets, applied by clicking with
@@ -12,11 +13,9 @@ export function LibraryWindow() {
   return (
     <aside
       aria-label="Materials"
-      className="flex w-[246px] shrink-0 flex-col border-r border-line bg-panel"
+      className="flex w-[272px] shrink-0 flex-col border-r border-line bg-panel"
     >
-      <div className="flex h-8 shrink-0 items-center border-b border-line px-2.5">
-        <h2 className="text-ctl text-ink">Materials</h2>
-      </div>
+      <PanelTitle>Materials</PanelTitle>
       <MaterialLibrary />
     </aside>
   );

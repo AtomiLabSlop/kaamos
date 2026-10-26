@@ -15,11 +15,13 @@ import {
   IconButton,
   Segmented,
   Select,
+  PresetButtons,
   Slider,
   Toggle,
   Tip,
 } from './controls';
 import { OutputSizeFields } from './panels/OutputSize';
+import { PROJECT_WINDOW_WIDTH } from './ProjectWindow';
 
 /**
  * The Render window: output, quality and history for the final image.
@@ -37,7 +39,7 @@ const MARGIN = 8;
 function defaultPosition() {
   // Beside the Project window, below the toolbar.
   return {
-    x: Math.max(MARGIN, window.innerWidth - 304 - WIDTH - 16),
+    x: Math.max(MARGIN, window.innerWidth - PROJECT_WINDOW_WIDTH - WIDTH - 16),
     y: 84,
   };
 }
@@ -150,7 +152,7 @@ export function RenderWindow() {
     <section
       role="dialog"
       aria-label="Render window"
-      className="fixed z-60 flex flex-col rounded-md border border-line-strong bg-panel shadow-2xl"
+      className="fixed z-60 flex flex-col overflow-hidden rounded-xl border border-line-strong bg-panel shadow-2xl"
       style={{ left: at.x, top: at.y, width: WIDTH, maxHeight: 'calc(100vh - 104px)' }}
     >
       <div
@@ -277,22 +279,12 @@ export function RenderWindow() {
                   defaultValue={128}
                 />
 
-                <div className="mb-2.5 flex gap-1">
-                  {PATH_SAMPLE_PRESETS.map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => updateRender({ pathSamples: count })}
-                      className={`h-[18px] flex-1 rounded-sm border text-micro tabular-nums transition-colors ${
-                        settings.pathSamples === count
-                          ? 'border-amber-dim bg-amber-wash text-amber'
-                          : 'border-line text-ink-faint hover:text-ink'
-                      }`}
-                    >
-                      {count}
-                    </button>
-                  ))}
-                </div>
+                <PresetButtons
+                  label="Path traced samples"
+                  values={PATH_SAMPLE_PRESETS}
+                  value={settings.pathSamples}
+                  onChange={(count) => updateRender({ pathSamples: count })}
+                />
 
                 <Slider
                   label="Bounces"
@@ -362,22 +354,12 @@ export function RenderWindow() {
                   defaultValue={24}
                 />
 
-                <div className="mb-2.5 flex gap-1">
-                  {SAMPLE_PRESETS.map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => updateRender({ samples: count })}
-                      className={`h-[18px] flex-1 rounded-sm border text-micro tabular-nums transition-colors ${
-                        settings.samples === count
-                          ? 'border-amber-dim bg-amber-wash text-amber'
-                          : 'border-line text-ink-faint hover:text-ink'
-                      }`}
-                    >
-                      {count}
-                    </button>
-                  ))}
-                </div>
+                <PresetButtons
+                  label="Raster samples"
+                  values={SAMPLE_PRESETS}
+                  value={settings.samples}
+                  onChange={(count) => updateRender({ samples: count })}
+                />
 
                 <Hint>
                   {dofOn
@@ -455,7 +437,7 @@ export function RenderWindow() {
                     return (
                       <li key={render.id}>
                         <div
-                          className={`group relative overflow-hidden rounded-sm border ${
+                          className={`group relative overflow-hidden rounded-md border ${
                             active ? 'border-amber-dim' : 'border-line'
                           }`}
                         >

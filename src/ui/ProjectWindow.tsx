@@ -8,6 +8,9 @@ import { LightingPanel } from './panels/LightingPanel';
 import { MaterialPanel } from './panels/MaterialPanel';
 import { ObjectPanel } from './panels/ObjectPanel';
 
+/** Width of the Project window; the Render window opens beside it. */
+export const PROJECT_WINDOW_WIDTH = 336;
+
 /**
  * The Project window: everything that describes the scene, in five tabs.
  * Its content follows the selection — pick a part and Material shows that
@@ -35,7 +38,8 @@ export function ProjectWindow() {
   return (
     <aside
       aria-label="Project"
-      className="flex w-[304px] shrink-0 flex-col border-l border-line bg-panel"
+      style={{ width: PROJECT_WINDOW_WIDTH }}
+      className="flex shrink-0 flex-col border-l border-line bg-panel"
     >
       <div
         role="tablist"

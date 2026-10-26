@@ -22,24 +22,60 @@
   --color-ink-dim: #949aa1;
   --color-ink-faint: #636a71;
 
-  --color-amber: #e8a33d;
-  --color-amber-dim: #a9761f;
-  --color-amber-wash: #e8a33d1a;
+  --color-amber: #faaf57;
+  --color-amber-dim: #d39348;
+  --color-amber-wash: #faaf571a;
 
   --color-danger: #d9643d;
   --color-ok: #6fae72;
 
+  /* Source Sans 3 (OFL), served with the app from @fontsource-variable;
+     Spectrum 2 reads it through --s2-font-family-sans below. */
   --font-ui:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI',
+    'Source Sans 3 Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     system-ui, sans-serif;
 
-  --text-micro: 10px;
-  --text-label: 11px;
-  --text-ctl: 12px;
-  --text-title: 13px;
+  /* Two pixels up from 1.01.x: Source Sans 3 is
+     smaller on the eye than the system font at the same size. */
+  --text-micro: 12px;
+  --text-label: 13px;
+  --text-ctl: 14px;
+  --text-title: 15px;
 
   --radius-sm: 2px;
   --radius-md: 3px;
+}
+
+/* Accent fills carry dark text: Kaamos amber (#faaf57) is too bright for
+   white (about 2:1). Spectrum accent Buttons always, emphasized
+   ToggleButtons while selected; not when disabled (grey fill). */
+.kaamos-accent-fill:not([data-disabled]),
+.kaamos-accent-fill:not([data-disabled]) *,
+.kaamos-emph[data-selected]:not([data-disabled]),
+.kaamos-emph[data-selected]:not([data-disabled]) * {
+  color: #1a1206 !important;
+}
+
+.kaamos-section {
+  border-bottom: 1px solid var(--color-line);
+}
+
+/* Section headers at the height of a scene-tree row. */
+.kaamos-section button[aria-expanded] {
+  min-height: 32px;
+}
+
+.kaamos-slider output {
+  /* Spectrum's read-only value: the editable field in the label row shows it. */
+  display: none;
+}
+
+:root {
+  /* Spectrum 2 components take their face from here instead of Adobe Clean. */
+  --s2-font-family-sans: var(--font-ui);
+  /* Spectrum's type scale is built on this (its default is 14); 16 lifts
+     Spectrum text by the same step as Kaamos's own, without growing spacing. */
+  --s2-font-size-base: 16;
 }
 
 @layer base {

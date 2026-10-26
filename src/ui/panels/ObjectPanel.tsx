@@ -8,6 +8,7 @@ import {
   Hint,
   Section,
   Segmented,
+  TextInput,
   Vector3Field,
 } from '../controls';
 import { formatCount } from '../../lib/util';
@@ -49,11 +50,7 @@ export function ObjectPanel() {
     <>
       <Section title="Object">
         <Field label="Name">
-          <input
-            value={node.name}
-            onChange={(event) => renameNode(selectedNodeId, event.target.value)}
-            className="h-[22px] min-w-0 flex-1 rounded-sm border border-line bg-well px-1.5 text-ctl"
-          />
+          <TextInput label="Object name" value={node.name} onChange={(name) => renameNode(selectedNodeId, name)} />
         </Field>
 
         {path.length > 1 && (

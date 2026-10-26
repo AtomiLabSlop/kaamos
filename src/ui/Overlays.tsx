@@ -26,7 +26,7 @@ export function Toasts() {
     return (
       <div
         key={key}
-        className={`pointer-events-auto flex gap-2 rounded-sm border bg-raised px-2.5 py-2 shadow-xl ${style.ring}`}
+        className={`pointer-events-auto flex gap-2.5 rounded-lg border bg-raised px-3 py-2.5 shadow-xl ${style.ring}`}
       >
         <span className={`mt-px shrink-0 ${style.tint}`}>
           <Icon name={style.icon} size={14} />
@@ -52,11 +52,12 @@ export function Toasts() {
     // here so that dismissing a toast is not also a click on the scene behind.
     <div
       aria-live="polite"
+      data-testid="toasts"
       className="pointer-events-none absolute top-2.5 right-2.5 z-40 flex w-[300px] max-w-[calc(100%-20px)] flex-col items-end gap-1.5"
       onPointerDown={(event) => event.stopPropagation()}
       onPointerUp={(event) => event.stopPropagation()}
     >
-      <div className="pointer-events-auto rounded-sm border border-line bg-panel/85 p-0.5 backdrop-blur-sm">
+      <div className="pointer-events-auto rounded-lg border border-line bg-panel/85 p-1 backdrop-blur-sm">
         <IconButton
           icon="bell"
           size={24}
@@ -67,7 +68,7 @@ export function Toasts() {
       </div>
       {open && (
         <div
-          className="pointer-events-auto flex max-h-[60vh] w-full flex-col gap-1.5 overflow-y-auto rounded-sm border border-line bg-panel/95 p-1.5 shadow-xl"
+          className="pointer-events-auto flex max-h-[60vh] w-full flex-col gap-1.5 overflow-y-auto rounded-xl border border-line bg-panel/95 p-2 shadow-xl"
           data-testid="toast-history"
         >
           {history.length === 0 ? (
@@ -287,7 +288,7 @@ export function RenderProgress() {
       aria-label="Rendering"
       className="fixed inset-0 z-95 grid place-items-center bg-shell p-4"
     >
-      <div className="w-full max-w-[380px] rounded-md border border-line bg-panel p-4 shadow-xl">
+      <div className="w-full max-w-[380px] rounded-xl border border-line bg-panel p-5 shadow-xl">
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-title text-ink">Rendering</p>
           <p className="text-ctl text-ink-dim tabular-nums">

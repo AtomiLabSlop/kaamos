@@ -13,6 +13,7 @@ import {
   Section,
   Select,
   Slider,
+  TextInput,
   Toggle,
 } from '../controls';
 
@@ -173,11 +174,7 @@ export function MaterialPanel() {
 
       <Section title="Material">
         <Field label="Name">
-          <input
-            value={def.name}
-            onChange={(event) => renameMaterial(editingId, event.target.value)}
-            className="h-[22px] min-w-0 flex-1 rounded-sm border border-line bg-well px-1.5 text-ctl"
-          />
+          <TextInput label="Material name" value={def.name} onChange={(name) => renameMaterial(editingId, name)} />
         </Field>
         <Field label="Base colour">
           <ColorField
@@ -219,7 +216,6 @@ export function MaterialPanel() {
       <Section
         key={`images-${editingId}`}
         title="Images"
-        defaultOpen={Object.keys(def.maps ?? {}).length > 0}
         hint="Colour images for labels and logos, and bump, roughness or normal maps for surface detail."
       >
         {IMAGE_SLOTS.map((entry) => (
@@ -329,7 +325,7 @@ export function MaterialPanel() {
         )}
       </Section>
 
-      <Section key={`coat-${editingId}`} title="Coating" defaultOpen={def.clearcoat > 0}>
+      <Section key={`coat-${editingId}`} title="Coating">
         <Slider
           label="Clearcoat"
           tip="A thin glossy layer over the surface, as on car paint or glazed ceramic."
@@ -374,7 +370,6 @@ export function MaterialPanel() {
       <Section
         key={`transparency-${editingId}`}
         title="Transparency"
-        defaultOpen={def.transmission > 0 || def.opacity < 1}
       >
         <Slider
           label="Transmission"
@@ -421,7 +416,7 @@ export function MaterialPanel() {
         />
       </Section>
 
-      <Section key={`sheen-${editingId}`} title="Sheen" defaultOpen={def.sheen > 0} hint="A soft edge glow, as on fabric and rubber.">
+      <Section key={`sheen-${editingId}`} title="Sheen" hint="A soft edge glow, as on fabric and rubber.">
         <Slider
           label="Sheen"
           value={def.sheen}
@@ -449,7 +444,6 @@ export function MaterialPanel() {
       <Section
         key={`sss-${editingId}`}
         title="Subsurface scattering"
-        defaultOpen={def.sssRadius > 0}
         hint="Light enters the material and scatters inside it before coming out: wax, skin, marble, milk, jade. Path traced views only (the fast viewport shows a plain surface). Needs a closed model. While on, transmission, thickness and attenuation are not used."
       >
         <Slider
@@ -466,7 +460,6 @@ export function MaterialPanel() {
       <Section
         key={`emission-${editingId}`}
         title="Emission"
-        defaultOpen={def.emissiveIntensity > 0}
         hint="Light given off by the surface. In path traced views it also lights the scene around it; the fast viewport shows only the glowing surface."
       >
         <Slider
@@ -489,7 +482,7 @@ export function MaterialPanel() {
         </Field>
       </Section>
 
-      <Section title="Shading" defaultOpen={false}>
+      <Section title="Shading">
         <Field
           label="Double-sided"
           tip="Render back faces too. Needed for open shells and for most glass."

@@ -58,7 +58,9 @@ The smoke test drives a real Chromium; fetch it once with
 ## How it is built
 
 React 19, TypeScript, Three.js with React Three Fiber and drei, Zustand for
-state, Tailwind CSS, Vite. Path tracing is
+state, Tailwind CSS, Vite. The interface is built on Adobe's
+[Spectrum 2](https://react-spectrum.adobe.com/) components, set in Source Sans 3
+and recoloured to Kaamos amber at build time (`vite.config.ts`). Path tracing is
 [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer) on
 [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh); STEP and IGES
 come through [occt-import-js](https://github.com/kovacsv/occt-import-js).

@@ -1,6 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import '@react-spectrum/s2/page.css';
+import '@fontsource-variable/source-sans-3';
 import './index.css';
+import { Provider } from '@react-spectrum/s2';
 import App from './App';
 import { useProject } from './store/project';
 import { useUI } from './store/ui';
@@ -17,6 +20,10 @@ if (import.meta.env.DEV) {
 
 createRoot(host).render(
   <StrictMode>
-    <App />
+    {/* Spectrum 2 needs one Provider at the root: dark scheme, no background
+        of its own (the app paints its shell), English locale. */}
+    <Provider colorScheme="dark" locale="en-US" UNSAFE_style={{ height: '100%' }}>
+      <App />
+    </Provider>
   </StrictMode>,
 );

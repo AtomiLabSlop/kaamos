@@ -80,7 +80,7 @@ class CanvasBoundary extends Component<
     if (!this.state.failed) return this.props.children;
     return (
       <div className="absolute inset-0 grid place-items-center bg-shell p-6">
-        <div className="max-w-[360px] rounded-md border border-danger/40 bg-panel p-4 text-center">
+        <div className="max-w-[360px] rounded-xl border border-danger/40 bg-panel p-5 text-center">
           <span className="mx-auto mb-2 grid size-7 place-items-center rounded-full border border-danger/40 text-danger">
             <Icon name="alert" />
           </span>
@@ -292,7 +292,7 @@ export function Viewport() {
 
       {/* Viewport controls. Kept to one strip so the scene stays the subject. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2.5">
-        <div className="pointer-events-auto flex items-center gap-0.5 rounded-sm border border-line bg-panel/85 p-0.5 backdrop-blur-sm">
+        <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-line bg-panel/85 p-1 backdrop-blur-sm">
           <IconButton size={30} iconSize={18} icon="frame" tip="Fit all  ·  A" onClick={fitView} />
           <IconButton
             size={30}
@@ -336,7 +336,7 @@ export function Viewport() {
           <div className="flex items-center gap-1.5">
           {pathPreview && (
             <div
-              className="rounded-sm border border-amber-dim bg-panel/85 px-2 py-1 text-label text-amber backdrop-blur-sm"
+              className="rounded-lg border border-amber-dim bg-panel/85 px-2.5 py-1 text-label text-amber backdrop-blur-sm"
               data-testid="path-preview-label"
             >
               {pathSamples < 0
@@ -344,7 +344,7 @@ export function Viewport() {
                 : `Path traced preview · ${pathSamples} / ${previewLimit} samples${pathSamples >= previewLimit ? ' · done' : ''}`}
             </div>
           )}
-          <div className="pointer-events-auto rounded-sm border border-line bg-panel/85 p-0.5 backdrop-blur-sm">
+          <div className="pointer-events-auto rounded-lg border border-line bg-panel/85 p-1 backdrop-blur-sm">
             <IconButton
             size={30}
             iconSize={18}
@@ -380,7 +380,7 @@ export function Viewport() {
       {/* Empty state */}
       {isEmpty && dragDepth === 0 && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center p-6">
-          <div className="pointer-events-auto w-full max-w-[340px] rounded-md border border-line bg-panel/92 p-4 backdrop-blur-sm">
+          <div className="pointer-events-auto w-full max-w-[340px] rounded-xl border border-line bg-panel/92 p-5 backdrop-blur-sm">
             {busy ? (
               // The import's progress takes the place of the buttons.
               <div role="status" data-testid="import-progress">
@@ -420,7 +420,7 @@ export function Viewport() {
       {/* Context loss */}
       {contextLost && (
         <div className="absolute inset-0 grid place-items-center bg-shell/92">
-          <div className="max-w-[340px] rounded-md border border-danger/40 bg-panel p-4 text-center">
+          <div className="max-w-[340px] rounded-xl border border-danger/40 bg-panel p-5 text-center">
             <Tip text="The GPU dropped the WebGL context">
               <span className="mx-auto mb-2 grid size-7 place-items-center rounded-full border border-danger/40 text-danger">
                 <Icon name="alert" />

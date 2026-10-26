@@ -58,7 +58,7 @@ function DragGhost({ def }: { def: MaterialDef }) {
 
   return createPortal(
     <div
-      className="pointer-events-none fixed z-100 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-sm border border-amber-dim bg-raised px-1.5 py-1 shadow-xl"
+      className="pointer-events-none fixed z-100 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-lg border border-amber-dim bg-raised px-2 py-1.5 shadow-xl"
       style={{ left: point.x, top: point.y }}
     >
       <Swatch def={def} size={18} />
@@ -193,7 +193,7 @@ export function MaterialLibrary() {
                 setOpenFolders((previous) => ({ ...previous, [folder.id]: open }))
               }
             >
-              <ul className="-mx-1 grid grid-cols-[repeat(auto-fill,minmax(64px,1fr))] gap-1">
+              <ul className="-mx-1 grid grid-cols-[repeat(auto-fill,minmax(76px,1fr))] gap-1.5">
                 {folder.ids.map((id) => {
                   const def = materials[id];
                   const isSelected = selectedMaterialId === id;
@@ -214,13 +214,13 @@ export function MaterialLibrary() {
                             selectMaterial(id);
                             setDragMaterial(id);
                           }}
-                          className={`flex w-full flex-col items-center gap-1 rounded-sm border px-1 pt-1.5 pb-1 transition-colors ${
+                          className={`flex w-full flex-col items-center gap-1.5 rounded-lg px-1 pt-2 pb-1.5 transition-colors ${
                             isSelected
-                              ? 'border-amber-dim bg-amber-wash'
-                              : 'border-transparent hover:border-line hover:bg-hover'
+                              ? 'bg-amber-wash ring-2 ring-amber ring-inset'
+                              : 'hover:bg-hover'
                           }`}
                         >
-                          <Swatch def={def} />
+                          <Swatch def={def} size={40} />
                           <span
                             className={`line-clamp-2 w-full text-center text-label leading-tight hyphens-auto ${
                               isSelected ? 'text-amber' : 'text-ink-dim'

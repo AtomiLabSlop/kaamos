@@ -78,7 +78,7 @@ export function Toolbar() {
           }
         }}
         aria-label="Project name"
-        className="h-[24px] w-[150px] rounded-sm border border-transparent bg-transparent px-1.5 text-ctl text-ink hover:border-line focus:border-line focus:bg-well"
+        className="h-[28px] w-[160px] rounded-md border border-transparent bg-transparent px-2 text-ctl text-ink hover:border-line focus:border-line focus:bg-well"
       />
 
       {/* When the project was last saved to a file, to the minute. A dot means

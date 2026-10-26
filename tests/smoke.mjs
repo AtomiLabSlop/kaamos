@@ -188,6 +188,12 @@ const projectAside = () => page.locator('aside[aria-label="Project"]');
 const projectTab = async (name) => {
   await projectAside().getByRole('tab', { name, exact: true }).click();
   await page.waitForTimeout(500);
+  // Sections start closed; open every one so the steps find their controls.
+  // Only the section headers (slot="trigger"): a Picker inside a section is
+  // also aria-expanded, and an open Picker blocks every later click.
+  const closed = projectAside().locator('.kaamos-section button[slot="trigger"][aria-expanded="false"]');
+  for (let i = (await closed.count()) - 1; i >= 0; i--) await closed.nth(i).click();
+  if (await closed.count()) await page.waitForTimeout(300);
 };
 /** The scene tree lives on Project > Scene, whichever tab was open before. */
 const hierarchy = async () => {
@@ -198,7 +204,14 @@ const hierarchy = async () => {
 const waitForHierarchy = async (pattern, timeout = 180_000) => {
   const deadline = Date.now() + timeout;
   for (;;) {
-    const text = await hierarchy();
+    // While a model is being parsed the page's main thread is busy and a click
+    // can wait longer than Playwright's 30 s; that is "not yet", not a failure.
+    let text = '';
+    try {
+      text = await hierarchy();
+    } catch (error) {
+      if (error?.name !== 'TimeoutError') throw error;
+    }
     if (pattern.test(text)) return text;
     if (Date.now() > deadline) throw new Error(`"${pattern}" never appeared`);
     await page.waitForTimeout(1000);
@@ -206,14 +219,31 @@ const waitForHierarchy = async (pattern, timeout = 180_000) => {
 };
 // A dialog, not just a label: the toolbar button that opens it shares the name.
 const renderWindow = () => page.getByRole('dialog', { name: 'Render window' });
+/** The Aspect picker is a Spectrum Picker: open it, then pick the option. */
+const chooseAspect = async (label) => {
+  await renderWindow().getByRole('button', { name: /Aspect/ }).click();
+  await page.getByRole('option', { name: label, exact: true }).click();
+};
+/** Output width and height, in that order. */
+const sizeFields = () => renderWindow().getByRole('textbox', { name: /^(Width|Height)$/ });
 const openRenderWindow = async () => {
   if ((await renderWindow().count()) === 0) {
     await page.getByRole('button', { name: 'Render window', exact: true }).click();
     await renderWindow().waitFor();
   }
 };
+// Kaamos's own toast region; Spectrum adds live regions of its own to the page.
 const toasts = () =>
-  page.locator('[aria-live="polite"]').innerText().catch(() => '');
+  page.locator('[data-testid="toasts"]').innerText().catch(() => '');
+/**
+ * Spectrum switches hide their checkbox under the drawn track, which takes the
+ * pointer; click the label around it instead, and only when the state differs.
+ */
+const setSwitch = async (control, on) => {
+  if ((await control.isChecked()) !== on) {
+    await control.locator('xpath=ancestor::label[1]').click();
+  }
+};
 
 async function importFile(path) {
   const chooser = page.waitForEvent('filechooser');
@@ -266,7 +296,9 @@ async function setRenderOutput(width, height, passes) {
   await openRenderWindow();
   // The built-in default engine is path traced; these steps measure the raster one.
   await renderWindow().getByRole('radio', { name: 'Raster' }).first().click({ force: true });
-  const sizes = renderWindow().locator('input[inputmode="decimal"]');
+  // Spectrum number fields: found by name, since whole-number fields are
+  // inputmode="numeric" and other fields in the window are "decimal".
+  const sizes = sizeFields();
   await sizes.nth(0).fill(String(width));
   await sizes.nth(0).press('Enter');
   await sizes.nth(1).fill(String(height));
@@ -370,9 +402,14 @@ await step('custom HDRI is rejected when corrupt', async () => {
   chooser.catch(() => {});
   await page.getByRole('button', { name: /Load HDRI file/ }).click();
   await (await chooser).setFiles(join(fixtures, 'broken.hdr'));
-  await page.waitForTimeout(2500);
-  const text = await toasts();
-  if (!/could not load environment/i.test(text)) throw new Error('no error reported');
+  // Wait for the message rather than a fixed time, as the valid case does.
+  await page
+    .getByText(/could not load environment/i)
+    .first()
+    .waitFor({ timeout: 20_000 })
+    .catch(async () => {
+      throw new Error(`no error reported (toasts: ${(await toasts()).slice(0, 120) || 'none'})`);
+    });
   return 'clear error shown';
 });
 
@@ -415,7 +452,7 @@ await step('orthographic projection round-trips', async () => {
 });
 
 await step('saved viewpoints', async () => {
-  await page.getByRole('button', { name: /Save the current view/i }).click();
+  await page.getByRole('button', { name: /Save (the )?current view/i }).click();
   await page.waitForTimeout(500);
   if ((await page.getByRole('button', { name: /^View 1$/ }).count()) === 0) {
     throw new Error('viewpoint not listed');
@@ -459,8 +496,12 @@ await shot('04-imported');
 
 let projectPath = null;
 await step('project saves with models embedded', async () => {
-  const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: /Save project/i }).click();
+  // Saving encodes every model on the main thread, which can take a while on a
+  // slow machine; and a wait left unhandled when the click fails would end the
+  // whole run instead of failing this step.
+  const download = page.waitForEvent('download', { timeout: 120_000 });
+  download.catch(() => {});
+  await page.getByRole('button', { name: /Save project/i }).first().click({ timeout: 120_000 });
   const file = await download;
   projectPath = join(SHOTS, 'roundtrip.rmproj.json');
   await file.saveAs(projectPath);
@@ -515,7 +556,7 @@ await step('transparent background renders an alpha cut-out', async () => {
   await page.keyboard.press('Escape');
   await page.waitForTimeout(500);
   await openRenderWindow();
-  await page.getByRole('switch', { name: 'Transparent background' }).click();
+  await setSwitch(page.getByRole('switch', { name: 'Transparent background' }), true);
   await setRenderOutput(320, 240, 2);
   await renderWindow().getByRole('button', { name: 'Render image' }).click();
   // Wait for this render specifically — an earlier one is already on screen.
@@ -584,25 +625,28 @@ await step('Materials window holds only materials', async () => {
 
 await step('Render window keeps the aspect ratio and draws the frame', async () => {
   await openRenderWindow();
-  const sizes = renderWindow().locator('input[inputmode="decimal"]');
+  const sizes = sizeFields();
   await sizes.nth(0).fill('800');
   await sizes.nth(0).press('Enter');
   await page.waitForTimeout(300);
   const h = await sizes.nth(1).inputValue();
   if (Number(h) <= 0) throw new Error('height unreadable');
-  // Choose 1:1: narrower than the viewport, so the frame must appear.
-  await renderWindow().getByRole('combobox').nth(1).selectOption({ label: '1 : 1' });
-  const frame = renderWindow().getByRole('switch', { name: 'Show frame' });
-  if ((await frame.getAttribute('aria-checked')) !== 'true') await frame.click();
+  // 1:1 first: the lock keeps width and height equal.
+  await chooseAspect('1 : 1');
+  await setSwitch(renderWindow().getByRole('switch', { name: 'Show frame' }), true);
   await page.waitForTimeout(600);
   const square = [await sizes.nth(0).inputValue(), await sizes.nth(1).inputValue()];
   if (square[0] !== square[1]) throw new Error(`not square: ${square.join('×')}`);
+  // A tall output is narrower than any viewport this test runs in (a square one
+  // is not: with both side windows open the view itself can be taller than wide).
+  await chooseAspect('9 : 16');
+  await page.waitForTimeout(600);
   if ((await page.locator('[data-testid="output-frame"]').count()) === 0) {
-    throw new Error('output frame not drawn for a square output');
+    throw new Error('output frame not drawn for a 9 : 16 output');
   }
-  await renderWindow().getByRole('combobox').nth(1).selectOption({ label: '4 : 3' });
+  await chooseAspect('4 : 3');
   await page.waitForTimeout(300);
-  return `800 → ${h} locked, 1:1 frame shown`;
+  return `800 → ${h} locked, 1:1 square, 9:16 frame shown`;
 });
 
 await step('heads-up display reports the scene', async () => {
@@ -640,6 +684,7 @@ await step('toolbar Render window button and hotkeys overview', async () => {
 
 await step('screenshot saves a real, labelled capture', async () => {
   const download = page.waitForEvent('download');
+  download.catch(() => {});
   await page.getByRole('button', { name: 'Screenshot', exact: true }).click();
   const file = await download;
   const name = file.suggestedFilename();

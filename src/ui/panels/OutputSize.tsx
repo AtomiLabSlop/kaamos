@@ -69,6 +69,7 @@ export function OutputSizeFields() {
         <NumberInput
           value={width}
           onChange={setWidth}
+          label="Width"
           min={MIN_DIMENSION}
           max={MAX_DIMENSION}
           step={16}
@@ -90,6 +91,7 @@ export function OutputSizeFields() {
         <NumberInput
           value={height}
           onChange={setHeight}
+          label="Height"
           min={MIN_DIMENSION}
           max={MAX_DIMENSION}
           step={16}
@@ -100,6 +102,7 @@ export function OutputSizeFields() {
 
       <Field label="Preset">
         <Select
+          label="Preset"
           value={matchingPreset?.label ?? 'custom'}
           onChange={(label) => {
             const preset = RESOLUTION_PRESETS.find((p) => p.label === label);
@@ -120,6 +123,7 @@ export function OutputSizeFields() {
         tip="Keeps the width and changes the height to the chosen ratio."
       >
         <Select
+          label="Aspect"
           value={aspect?.label ?? 'custom'}
           onChange={(label) => {
             const entry = ASPECTS.find((a) => a.label === label);
