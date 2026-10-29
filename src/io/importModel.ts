@@ -12,6 +12,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { parse3mf } from './import3mf';
 import { fixOrientation } from './fixOrientation';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
@@ -49,6 +50,7 @@ export const SUPPORTED_EXTENSIONS = [
   'gltf',
   'obj',
   'stl',
+  '3mf',
   'stp',
   'step',
   'igs',
@@ -58,7 +60,7 @@ export const SUPPORTED_EXTENSIONS = [
  * What the importer reads, in words, for messages. Kept in step with the list
  * above so no message names fewer formats than the importer accepts.
  */
-export const SUPPORTED_FORMATS_TEXT = 'GLB, glTF, OBJ, STL, STEP and IGES';
+export const SUPPORTED_FORMATS_TEXT = 'GLB, glTF, OBJ, STL, 3MF, STEP and IGES';
 
 /**
  * The model picker deliberately has no `accept` filter. A filter greys out
@@ -98,6 +100,7 @@ export function formatFromName(name: string): ModelFormat | null {
   if (ext === 'gltf') return 'gltf';
   if (ext === 'obj') return 'obj';
   if (ext === 'stl') return 'stl';
+  if (ext === '3mf') return '3mf';
   return cadFormatFromExtension(ext);
 }
 
@@ -589,6 +592,12 @@ export async function importModelFromBytes(
       loaded = parseStl(bytes, displayName);
       // No colour in STL: the flat default would read badly in a studio.
       defaultMaterialId = libraryMaterialId(DEFAULT_MATERIAL_PRESET);
+    } else if (format === '3mf') {
+      const parsed = parse3mf(bytes, displayName);
+      loaded = parsed.object;
+      extraWarnings.push(...parsed.warnings);
+      // A file without colours would arrive as the flat default.
+      if (!parsed.hasColours) defaultMaterialId = libraryMaterialId(DEFAULT_MATERIAL_PRESET);
     } else if (format === 'obj') {
       const { object, usedMtl, nurbsSurfaces } = await parseObj(bytes, companions);
       loaded = object;

@@ -21,14 +21,16 @@ export const EXAMPLE_MODEL = {
 export const EXAMPLE_MATERIALS: Record<string, string> = {
   Bottle: 'bottle-glass',
   Label: 'label-paper',
-  Liquid: 'amber-liquid',
+  'Back label': 'back-label-paper',
+  Whiskey: 'amber-liquid',
   'Cork shank': 'cork',
   Cap: 'bottle-cap',
 };
 
 /**
- * Images the example's materials start with: the label artwork (padded to the
- * label's proportions so it isn't stretched) and a cork-grain bump map. Each is
+ * Images the example's materials start with: the front and back label artwork
+ * (each padded to its label's proportions so it isn't stretched) and a
+ * cork-grain bump map. Each is
  * set only where the material has no image in that slot yet, so a material the
  * user has already changed is left alone.
  */
@@ -44,6 +46,13 @@ export const EXAMPLE_IMAGES: {
     file: 'kaamos-label.jpg',
     // The label wraps a quarter of the bottle, so it is mapped around the axis,
     // and only its outer face carries the print.
+    patch: { mapProjection: 'cylinder', mapSingleSided: true },
+  },
+  {
+    preset: 'back-label-paper',
+    slot: 'map',
+    file: 'kaamos-back-label.jpg',
+    // A 72 degree strip on the far side, mapped the same way as the front label.
     patch: { mapProjection: 'cylinder', mapSingleSided: true },
   },
   {
@@ -76,7 +85,7 @@ export async function fetchExampleImage(file: string): Promise<{ bytes: ArrayBuf
  * part's origin (the bottle's axis and base). An experiment: if the black glass
  * persists, this was not the cause.
  */
-export const EXAMPLE_LIQUID = { part: 'Liquid', scale: 1.005 } as const;
+export const EXAMPLE_LIQUID = { part: 'Whiskey', scale: 1.005 } as const;
 
 export async function fetchExampleModel(): Promise<File> {
   // Revalidate, as for the textures: the file keeps its name when it is replaced.
@@ -88,8 +97,8 @@ export async function fetchExampleModel(): Promise<File> {
 }
 
 /**
- * The label sits in the +X/+Z quadrant of the GLB (45 degrees between those
- * axes), so the example's root is turned 45 degrees clockwise seen from above
+ * The front label sits in the +X/+Z quadrant of the GLB (45 degrees between
+ * those axes; the back label is opposite it), so the example's root is turned 45 degrees clockwise seen from above
  * (-45 degrees about Y) to put the label's centre toward the front view (+Z).
  */
 export const EXAMPLE_ROTATION_Y = -Math.PI / 4;

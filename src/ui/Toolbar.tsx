@@ -33,6 +33,7 @@ export function Toolbar() {
   const toggleRenderWindow = useUI((state) => state.toggleRenderWindow);
   const setHotkeysOpen = useUI((state) => state.setHotkeysOpen);
   const setAboutOpen = useUI((state) => state.setAboutOpen);
+  const setTaleOpen = useUI((state) => state.setTaleOpen);
   const viewTool = useUI((state) => state.viewTool);
   const setViewTool = useUI((state) => state.setViewTool);
   const rendering = useUI((state) => state.renderProgress.active);
@@ -45,20 +46,30 @@ export function Toolbar() {
 
   return (
     <header className="flex h-11 shrink-0 items-center gap-1.5 border-b border-line bg-panel pl-4 pr-3">
-      <Tip text="About Kaamos — known limitations and feedback">
-        <button
-          type="button"
-          onClick={() => setAboutOpen(true)}
-          aria-label="About Kaamos"
-          className="flex shrink-0 cursor-pointer items-center gap-3 rounded-sm pr-3 hover:opacity-80"
-        >
-          <img src={markUrl} alt="" width={28} height={28} className="h-[28px] w-[28px]" />
-          <img src={wordmarkUrl} alt="Kaamos" height={17} className="relative -top-[2px] h-[17px] w-auto" />
-          <span className="text-label leading-none tabular-nums text-ink-dim" data-testid="app-version">
+      <div className="flex shrink-0 items-center gap-3 pr-3">
+        <Tip text="The Tale of Kaamos">
+          <button
+            type="button"
+            onClick={() => setTaleOpen(true)}
+            aria-label="The Tale of Kaamos"
+            className="flex cursor-pointer items-center gap-3 rounded-sm hover:opacity-80"
+          >
+            <img src={markUrl} alt="" width={28} height={28} className="h-[28px] w-[28px]" />
+            <img src={wordmarkUrl} alt="Kaamos" height={17} className="relative -top-[2px] h-[17px] w-auto" />
+          </button>
+        </Tip>
+        <Tip text="About Kaamos — known limitations and feedback">
+          <button
+            type="button"
+            onClick={() => setAboutOpen(true)}
+            aria-label="About Kaamos"
+            className="cursor-pointer rounded-sm text-label leading-none tabular-nums text-ink-dim hover:opacity-80"
+            data-testid="app-version"
+          >
             {APP_VERSION}
-          </span>
-        </button>
-      </Tip>
+          </button>
+        </Tip>
+      </div>
 
       <span className="mx-2 h-5 w-px bg-line" />
 

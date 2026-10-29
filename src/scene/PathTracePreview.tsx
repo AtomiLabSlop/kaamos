@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { patchSubsurface } from '../render/subsurface';
+import { patchFocusPlane } from '../render/focusPlane';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
   HalfFloatType,
@@ -146,6 +147,8 @@ export function PathTracePreview() {
   const tracer = useRef<Tracer | null>(null);
   const limit = useProject((state) => state.render.previewSamples);
   useEffect(() => invalidate(), [limit, invalidate]);
+  const paused = useUI((state) => state.pathPaused);
+  useEffect(() => invalidate(), [paused, invalidate]);
   // The loop sleeps once the limit is reached, so a lens edit has to wake it.
   const lensSignature = useProject(
     (state) =>
@@ -359,6 +362,7 @@ export function PathTracePreview() {
       const instance = new lib_.WebGLPathTracer(gl);
       patchNanGuard(instance);
       patchSubsurface(instance);
+      patchFocusPlane(instance);
       created = instance;
       applyBounces(instance);
       // Until it has enough samples the tracer draws a raster picture itself, at
@@ -492,7 +496,8 @@ export function PathTracePreview() {
     // has, and the loop stops asking for frames, so the GPU goes idle.
     const limit = useProject.getState().render.previewSamples;
     const done = active.samples >= limit;
-    active.pausePathTracing = done;
+    const paused = useUI.getState().pathPaused;
+    active.pausePathTracing = done || paused;
     active.renderSample();
     if (scissored) gl.setScissorTest(false);
 
@@ -502,7 +507,7 @@ export function PathTracePreview() {
       lastReport.current = { samples, at: now };
       useUI.getState().setPathPreviewSamples(samples);
     }
-    if (!done) invalidate();
+    if (!done && !paused) invalidate();
   }, 1);
 
   return null;

@@ -6,8 +6,8 @@ import {
   setCameraHeight,
   setCameraRoll,
   setHeightOffset,
-  setSide,
-  setSideOffset,
+  setCameraDistance,
+  cameraDistanceRange,
   targetDistance,
   viewport,
 } from '../../scene/viewportApi';
@@ -113,6 +113,7 @@ export function CameraPanel() {
   const perspective = camera.projection === 'perspective';
   const { pose, refresh } = useCameraPose(camera.projection);
   const heightRange = cameraHeightRange();
+  const distanceRange = cameraDistanceRange();
   const reach = cameraOffsetReach();
   const focusWorld = render.focusDistance > 0 ? render.focusDistance : targetDistance();
   const removeViewpoint = useProject((state) => state.removeViewpoint);
@@ -165,7 +166,7 @@ export function CameraPanel() {
       <Section title="Position">
         <Group title="Height">
           <MmSlider
-            label="Height"
+            label="Camera height (aim fixed)"
             tip="How high the camera sits above the floor. It keeps looking at the same point, so it tilts as it rises or sinks."
             world={pose.height}
             min={heightRange.min}
@@ -176,7 +177,7 @@ export function CameraPanel() {
             }}
           />
           <MmSlider
-            label="Offset"
+            label="Shift view"
             tip="Lifts the camera and the point it looks at together, without tilting: the view slides up or down. Zero is where the view was last framed."
             world={pose.heightOffset}
             min={-reach}
@@ -188,30 +189,21 @@ export function CameraPanel() {
           />
         </Group>
 
-        <Group title="Side">
-          <MmSlider
-            label="Side"
-            tip="Moves the camera sideways while it keeps looking at the same point, so it turns towards it."
-            world={pose.side}
-            min={-reach}
-            max={reach}
-            onChange={(world) => {
-              setSide(world);
-              refresh();
-            }}
-          />
-          <MmSlider
-            label="Offset"
-            tip="Slides the camera and the point it looks at sideways together, without turning. Zero is where the view was last framed."
-            world={pose.sideOffset}
-            min={-reach}
-            max={reach}
-            onChange={(world) => {
-              setSideOffset(world);
-              refresh();
-            }}
-          />
-        </Group>
+        {perspective && (
+          <Group title="Distance">
+            <MmSlider
+              label="Distance from subject"
+              tip="Moves the camera towards or away from the point it looks at, without turning. The field of view stays as it is; to keep the subject's size while changing perspective, use the field of view."
+              world={pose.distance}
+              min={distanceRange.min}
+              max={distanceRange.max}
+              onChange={(world) => {
+                setCameraDistance(world);
+                refresh();
+              }}
+            />
+          </Group>
+        )}
 
         <Group title="Roll">
           <Slider
@@ -302,7 +294,7 @@ export function CameraPanel() {
                   updateRender({ focusDistance: mmToWorld(Math.max(mm, 1)) }, 'render-focus')
                 }
                 min={1}
-                step={10}
+                step={1}
                 decimals={0}
                 width={70}
                 suffix="mm"
@@ -320,9 +312,7 @@ export function CameraPanel() {
               decimals={1}
               defaultValue={2.8}
             />
-            <Hint>
-              The blur is worked out from the model's real size. {unitNote() ?? ''}
-            </Hint>
+            {unitNote() && <Hint>{unitNote()}</Hint>}
           </>
         )}
       </Section>

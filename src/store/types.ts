@@ -9,7 +9,7 @@
 
 export type Vec3 = [number, number, number];
 
-export type ModelFormat = 'glb' | 'gltf' | 'obj' | 'stl' | 'step' | 'iges';
+export type ModelFormat = 'glb' | 'gltf' | 'obj' | 'stl' | '3mf' | 'step' | 'iges';
 
 export type NodeId = string;
 

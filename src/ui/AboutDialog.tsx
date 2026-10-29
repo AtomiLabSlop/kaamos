@@ -44,7 +44,8 @@ export function AboutDialog() {
     <Modal
       title={`About Kaamos ${APP_VERSION}`}
       onClose={close}
-      wide
+      size="L"
+      closeOnOutsideClick
       footer={
         <>
           {FEEDBACK_URL && (

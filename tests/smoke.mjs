@@ -341,14 +341,14 @@ await step('the example bottle stands on the floor with its parts named', async 
   // part names keep their spaces ("Cork shank", not "Cork_shank").
   await projectTab('Scene');
   const tree = await hierarchy();
-  for (const part of ['Bottle', 'Label', 'Liquid', 'Cork shank', 'Cap']) {
+  for (const part of ['Bottle', 'Label', 'Back label', 'Whiskey', 'Cork shank', 'Cap']) {
     if (!tree.includes(part)) throw new Error(`part "${part}" missing`);
   }
   await projectAside().getByRole('button', { name: /^examplebottle/ }).first().click();
   await page.waitForTimeout(400);
   const values = (await projectAside().locator('input').evaluateAll((els) => els.map((e) => e.value))).map(Number);
   if (Math.abs(values[2]) > 0.002) throw new Error(`model root is ${values[2]} above the floor`);
-  return 'five named parts, root at floor level';
+  return 'six named parts, root at floor level';
 });
 
 await step('the product name is shown', async () => {

@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@fontsource-variable/source-sans-3": "^5.3.1",
+    "@fontsource/pinyon-script": "^5.3.0",
     "@react-spectrum/s2": "^1.8.2",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",

@@ -495,19 +495,14 @@ export function setCameraHeight(y: number) {
 
 /**
  * How the camera was last framed (a view, Fit all, a restored viewpoint). The
- * offset sliders measure from here, and "sideways" means this view's horizontal
- * right-hand direction, which stays fixed while the camera is orbited.
+ * shift slider measures from here.
  */
-const home = { target: new Vector3(), right: new Vector3(1, 0, 0), set: false };
+const home = { target: new Vector3(), set: false };
 
 function markHome() {
   const camera = viewport.camera;
   if (!camera) return;
   home.target.copy(viewport.controls?.target ?? new Vector3());
-  home.right.set(1, 0, 0).applyQuaternion(camera.quaternion);
-  home.right.y = 0;
-  if (home.right.lengthSq() < 1e-6) home.right.set(1, 0, 0);
-  else home.right.normalize();
   home.set = true;
 }
 
@@ -535,25 +530,21 @@ export interface CameraPose {
   height: number;
   /** How far the aim point has been lifted from where the view was framed. */
   heightOffset: number;
-  /** How far the camera sits to the side of the aim point. */
-  side: number;
-  /** How far the aim point has been moved sideways from where the view was framed. */
-  sideOffset: number;
+  /** Distance from the camera to the point it aims at. */
+  distance: number;
   roll: number;
 }
 
 export function readCameraPose(): CameraPose {
   const camera = viewport.camera;
-  if (!camera) return { height: 0, heightOffset: 0, side: 0, sideOffset: 0, roll: 0 };
+  if (!camera) return { height: 0, heightOffset: 0, distance: 0, roll: 0 };
   if (!home.set) markHome();
   const target = viewport.controls?.target ?? new Vector3();
   const moved = target.clone().sub(home.target);
-  const lateral = camera.position.clone().sub(target);
   return {
     height: camera.position.y,
     heightOffset: moved.y,
-    side: lateral.dot(home.right),
-    sideOffset: moved.dot(home.right),
+    distance: camera.position.distanceTo(target),
     roll: (cameraRoll.angle * 180) / Math.PI,
   };
 }
@@ -572,17 +563,24 @@ export function setHeightOffset(value: number) {
   slideBoth(new Vector3(0, value - readCameraPose().heightOffset, 0));
 }
 
-export function setSideOffset(value: number) {
-  slideBoth(home.right.clone().multiplyScalar(value - readCameraPose().sideOffset));
-}
-
-/** Moves the camera sideways while it keeps looking at the same point, so it turns. */
-export function setSide(value: number) {
+/** Moves the camera along its line of sight to this distance from the aim point. */
+export function setCameraDistance(value: number) {
   const camera = viewport.camera;
-  if (!camera) return;
-  camera.position.addScaledVector(home.right, value - readCameraPose().side);
+  const target = viewport.controls?.target;
+  if (!camera || !target || !Number.isFinite(value)) return;
+  const direction = camera.position.clone().sub(target);
+  if (direction.lengthSq() < 1e-12) return;
+  camera.position.copy(target).addScaledVector(direction.normalize(), Math.max(value, 1e-4));
   viewport.controls?.update();
   requestRedraw();
+}
+
+/** The distance slider's span: from close to the subject to well away from it. */
+export function cameraDistanceRange(): { min: number; max: number } {
+  const box = subjectBounds() ?? FALLBACK_BOX();
+  const radius = Math.max(box.getBoundingSphere(new Sphere()).radius, 1e-4);
+  const current = targetDistance();
+  return { min: Math.min(radius * 0.1, current), max: Math.max(radius * 20, current) };
 }
 
 /** How far the offset sliders reach either way: a few subject sizes. */

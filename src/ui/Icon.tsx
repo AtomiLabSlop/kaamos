@@ -18,6 +18,7 @@ export const PATHS = {
   redo: 'M12.5 7.5h-6a3 3 0 1 0 0 6H8.5M12.5 7.5 10 5M12.5 7.5 10 10',
   render:
     'M14 8A6 6 0 1 1 2 8a6 6 0 0 1 12 0M8 2.2V8M13.1 11 8 8M2.9 11 8 8',
+  rays: 'M1.6 14Q8 7.6 14.4 14M3 4 8 9 11.4 5.6',
   eye: 'M1.6 8S4 4.3 8 4.3 14.4 8 14.4 8 12 11.7 8 11.7 1.6 8 1.6 8M9.75 8a1.75 1.75 0 1 1-3.5 0 1.75 1.75 0 0 1 3.5 0',
   eyeOff:
     'M6.2 5a5.6 5.6 0 0 1 1.8-.3c4 0 6.4 3.3 6.4 3.3a12 12 0 0 1-2 2.2M4.2 5.9A11.4 11.4 0 0 0 1.6 8S4 11.3 8 11.3c.7 0 1.3-.1 1.9-.3M2.5 13.5l11-11',
@@ -60,6 +61,8 @@ export const PATHS = {
   ortho: 'M3.2 3.2h9.6v9.6H3.2z',
   pin: 'M8 9.6V14M5.2 2.4h5.6l-.8 4.2H6z',
   stop: 'M4.5 4.5h7v7h-7z',
+  pause: 'M5.5 3.5v9M10.5 3.5v9',
+  play: 'M5 3.2l7 4.8-7 4.8z',
   lock: 'M4.5 7.2h7V13h-7zM6 7.2V5.4a2 2 0 1 1 4 0v1.8',
   unlock: 'M4.5 7.2h7V13h-7zM6 7.2V5.4a2 2 0 0 1 3.9-.5',
   screenshot:
@@ -73,6 +76,11 @@ export const PATHS = {
   orbit: 'M2 8c0-1.7 2.7-3 6-3s6 1.3 6 3-2.7 3-6 3-6-1.3-6-3zM6.5 8a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0',
   zoom: 'M13 13l-2.6-2.6M10.8 6.9a3.9 3.9 0 1 1-7.8 0 3.9 3.9 0 0 1 7.8 0M5 6.9h3.8M6.9 5v3.8',
 } as const;
+
+/** Solid shapes drawn over an icon's strokes, by icon name. */
+const FILLED: Partial<Record<keyof typeof PATHS, string>> = {
+  rays: 'M13.2 3.8 12.35 6.63 10.37 4.65z',
+};
 
 export type IconName = keyof typeof PATHS;
 
@@ -102,6 +110,7 @@ export function Icon({
       focusable="false"
     >
       <path d={PATHS[name]} />
+      {FILLED[name] && <path d={FILLED[name]} fill="currentColor" />}
     </svg>
   );
 }
@@ -125,6 +134,7 @@ export function spectrumIcon(name: IconName): FunctionComponent<IconProps> {
         {...props}
       >
         <path d={PATHS[name]} />
+        {FILLED[name] && <path d={FILLED[name]} fill="currentColor" />}
       </svg>
     ));
     spectrumIcons.set(name, made);

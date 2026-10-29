@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -77,15 +78,31 @@ const TIP_DELAY = 420;
 export function Tip({ text, children }: { text?: string; children: ReactNode }) {
   const ctx = useContext(TooltipCtx);
   const timer = useRef<number>(0);
+  const shown = useRef(false);
+  const hideTip = ctx?.hide;
+
+  // A control that disappears while hovered (the Render button turns into the
+  // progress bar) never gets a pointer-leave, so its tip would stay on screen.
+  useEffect(
+    () => () => {
+      window.clearTimeout(timer.current);
+      if (shown.current) hideTip?.();
+    },
+    [hideTip],
+  );
 
   if (!text || !ctx) return <>{children}</>;
 
   const open = () => {
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => ctx.show(text), TIP_DELAY);
+    timer.current = window.setTimeout(() => {
+      shown.current = true;
+      ctx.show(text);
+    }, TIP_DELAY);
   };
   const close = () => {
     window.clearTimeout(timer.current);
+    shown.current = false;
     ctx.hide();
   };
 
@@ -829,12 +846,21 @@ export function Vector3Field({
    Modal
  * ------------------------------------------------------------------ */
 
+/**
+ * Width of the About window and of the picture window opened from the logo.
+ * It is Spectrum's size L: a dialog's width comes from its size and cannot be
+ * set on the dialog itself (the background stays at the size's width).
+ */
+export const POPOVER_WIDTH = 640;
+
 export function Modal({
   title,
   children,
   onClose,
   footer,
   wide = false,
+  size,
+  closeOnOutsideClick = false,
 }: {
   title: string;
   children: ReactNode;
@@ -842,13 +868,34 @@ export function Modal({
   footer?: ReactNode;
   /** A wider panel for reading text rather than answering a question. */
   wide?: boolean;
+  /** Spectrum's own sizes (S 400, M 480, L 640 px), where `wide` is not enough. */
+  size?: 'S' | 'M' | 'L';
+  /**
+   * Close on a press outside the dialog. Spectrum only offers that to a dialog
+   * without footer buttons, so a dialog with a footer gets it from here. Left
+   * off for questions, where a stray click should not answer for the user.
+   */
+  closeOnOutsideClick?: boolean;
 }) {
+  useEffect(() => {
+    if (!closeOnOutsideClick) return undefined;
+    const onPress = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (target && !target.closest('[role="dialog"], [role="alertdialog"]')) onClose();
+    };
+    document.addEventListener('pointerdown', onPress);
+    return () => document.removeEventListener('pointerdown', onPress);
+  }, [closeOnOutsideClick, onClose]);
+
   // Spectrum Dialog: Esc calls onClose and focus is trapped inside. Spectrum
   // hides a dialog's ButtonGroup when it is dismissible (close button + click
   // outside), so only a dialog without footer buttons is made dismissible.
   return (
     <S2DialogContainer onDismiss={onClose}>
-      <S2Dialog isDismissible={!footer} size={wide ? 'M' : 'S'}>
+      <S2Dialog
+        isDismissible={!footer}
+        size={size ?? (wide ? 'M' : 'S')}
+      >
         <S2Heading slot="title">{title}</S2Heading>
         <S2Content>
           <div className="text-ctl leading-relaxed text-ink-dim">{children}</div>

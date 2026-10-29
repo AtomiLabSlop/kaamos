@@ -7,6 +7,7 @@ import { ProjectWindow } from './ui/ProjectWindow';
 import { RenderWindow } from './ui/RenderWindow';
 import { HotkeysDialog } from './ui/HotkeysDialog';
 import { AboutDialog } from './ui/AboutDialog';
+import { TaleDialog } from './ui/TaleDialog';
 import { Viewport } from './ui/Viewport';
 import {
   BusyBar,
@@ -181,6 +182,7 @@ export default function App() {
       <RenderPreview />
       <HotkeysDialog />
       <AboutDialog />
+      <TaleDialog />
       <RenderProgress />
       <DesktopNotice />
     </TooltipLayer>

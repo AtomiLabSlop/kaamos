@@ -19,7 +19,7 @@ Kaamos locally with no network access at all.
 
 ## What it does
 
-- **Import** GLB and glTF, OBJ, STEP and IGES (STEP/IGES are meshed in the
+- **Import** GLB and glTF, OBJ, STL, 3MF, STEP and IGES (STEP/IGES are meshed in the
   browser with OpenCascade compiled to WebAssembly).
 - **Materials:** a library of plastics, metals, glass, paint, ceramic,
   translucent, fabric and emissive presets, and an editor for colour,

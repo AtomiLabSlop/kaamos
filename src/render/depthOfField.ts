@@ -26,19 +26,20 @@ const FILE_UNIT_METRES: Record<ModelFormat, number> = {
   iges: 0.001,
   obj: 0.001,
   stl: 0.001,
+  '3mf': 0.001, // converted to millimetres on import whatever unit the file names
   glb: 1,
   gltf: 1,
 };
 
-/** The unit assumption that applies to the first model, for the panel's note. */
+/**
+ * The panel's note when the first model's unit is a guess (a format that carries
+ * none); null when the file states its own unit, as there is nothing to warn about.
+ */
 export function unitNote(): string | null {
   const model = Object.values(useProject.getState().models)[0];
-  if (!model?.format) return null;
-  if (model.format === 'obj') return 'OBJ files carry no unit; millimetres assumed.';
-  if (model.format === 'stl') return 'STL files carry no unit; millimetres assumed.';
-  return model.format === 'glb' || model.format === 'gltf'
-    ? 'Sizes taken from the file in metres.'
-    : 'Sizes taken from the file in millimetres.';
+  if (model?.format === 'obj') return 'OBJ files carry no unit; millimetres assumed.';
+  if (model?.format === 'stl') return 'STL files carry no unit; millimetres assumed.';
+  return null;
 }
 
 /** Real metres that one world unit stands for, judged from the first model. */

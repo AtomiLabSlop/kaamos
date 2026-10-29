@@ -1,7 +1,10 @@
 import { APP_VERSION } from './version';
+import { selectStats, useProject } from '../store/project';
+import { useUI } from '../store/ui';
 
 /**
- * One line naming this Kaamos version, browser, system and graphics chip, for
+ * One line naming this Kaamos version, browser, system, graphics chip, scene size
+ * and whether the graphics context was lost this session, for
  * feedback. Most early problems depend on the browser and the GPU, so the
  * feedback form gets this line filled in for the user.
  */
@@ -58,5 +61,11 @@ function gpuName(): string {
 
 export function systemInfoLine(): string {
   const agent = navigator.userAgent;
-  return `Kaamos ${APP_VERSION} · ${browserName(agent)} · ${systemName(agent)} · ${gpuName()}`;
+  const { triangles } = selectStats(useProject.getState());
+  const size = triangles >= 1000 ? `${Math.round(triangles / 1000)}k` : String(triangles);
+  const lost = useUI.getState().contextLostCount;
+  return (
+    `Kaamos ${APP_VERSION} · ${browserName(agent)} · ${systemName(agent)} · ${gpuName()}` +
+    ` · ${size} triangles in scene · graphics context lost: ${lost > 0 ? `${lost}×` : 'no'}`
+  );
 }

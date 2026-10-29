@@ -16,6 +16,7 @@ import {
   type Texture,
   type WebGLRenderer,
 } from 'three';
+import { patchFocusPlane } from './focusPlane';
 import { patchSubsurface } from './subsurface';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { releasePrintedSides } from '../scene/PrintedSide';
@@ -532,6 +533,7 @@ export async function renderPathTraced(
     tracer = new PathTracerLib.WebGLPathTracer(gl);
     patchNanGuard(tracer);
     patchSubsurface(tracer);
+    patchFocusPlane(tracer);
     // Everything below turns off the interactive behaviour: no warm-up delay,
     // no low-resolution preview, no fade-in, and no drawing to the canvas,
     // because the result is read from the target instead.

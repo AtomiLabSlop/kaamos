@@ -146,6 +146,8 @@ export function Viewport() {
   const paintBrush = useUI((state) => state.paintBrush);
   const pathPreview = useUI((state) => state.pathPreview);
   const pathSamples = useUI((state) => state.pathPreviewSamples);
+  const pathPaused = useUI((state) => state.pathPaused);
+  const setPathPaused = useUI((state) => state.setPathPaused);
   const previewLimit = useProject((state) => state.render.previewSamples);
   const outputWidth = useProject((state) => state.render.width);
   const outputHeight = useProject((state) => state.render.height);
@@ -360,14 +362,25 @@ export function Viewport() {
             >
               {pathSamples < 0
                 ? 'Path traced preview · preparing the scene…'
-                : `Path traced preview · ${pathSamples} / ${previewLimit} samples${pathSamples >= previewLimit ? ' · done' : ''}`}
+                : `Path traced preview · ${pathSamples} / ${previewLimit} samples${pathSamples >= previewLimit ? ' · done' : pathPaused ? ' · paused' : ''}`}
+            </div>
+          )}
+          {pathPreview && pathSamples >= 0 && pathSamples < previewLimit && (
+            <div className="pointer-events-auto rounded-lg border border-line bg-panel/85 p-1 backdrop-blur-sm">
+              <IconButton
+                size={30}
+                iconSize={18}
+                icon={pathPaused ? 'play' : 'pause'}
+                tip={pathPaused ? 'Resume tracing' : 'Pause tracing — keep the picture as it is'}
+                onClick={() => setPathPaused(!pathPaused)}
+              />
             </div>
           )}
           <div className="pointer-events-auto rounded-lg border border-line bg-panel/85 p-1 backdrop-blur-sm">
             <IconButton
             size={30}
             iconSize={18}
-              icon="render"
+              icon="rays"
               tip={
                 pathPreview
                   ? 'Path traced preview is on — switch back to the fast viewport'

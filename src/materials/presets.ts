@@ -362,7 +362,7 @@ export const MATERIAL_PRESETS: MaterialPreset[] = [
   }),
 
   /** A lightly tinted, clear liquid (pale whisky, tea): refracts like water, colours what passes through. */
-  preset('amber-liquid', 'Liquid', 'example-bottle', {
+  preset('amber-liquid', 'Whiskey', 'example-bottle', {
     color: '#e0c8b0',
     metalness: 0,
     roughness: 0.03,
@@ -373,6 +373,11 @@ export const MATERIAL_PRESETS: MaterialPreset[] = [
   }),
   /** Own slot, so an image placed on a label doesn't spread to every matte plastic part. */
   preset('label-paper', 'Label', 'example-bottle', {
+    color: '#ffffff',
+    roughness: 0.7,
+  }),
+  /** The back label's own slot, so its image stays apart from the front label's. */
+  preset('back-label-paper', 'Back label', 'example-bottle', {
     color: '#ffffff',
     roughness: 0.7,
   }),

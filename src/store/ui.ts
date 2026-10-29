@@ -73,6 +73,8 @@ interface UIState {
   hotkeysOpen: boolean;
   /** About Kaamos: known limitations and the feedback link. */
   aboutOpen: boolean;
+  /** The picture opened by a click on the logo. */
+  taleOpen: boolean;
 
   showGrid: boolean;
   showLightHelpers: boolean;
@@ -89,6 +91,8 @@ interface UIState {
   /** While a blocking stage runs: where the bar should glide to, and over how long. */
   busyEstimate: { to: number; seconds: number } | null;
   contextLost: boolean;
+  /** How many times the graphics context was lost since the page loaded, for bug reports. */
+  contextLostCount: number;
   /** What the renderer was holding when the context was lost, for a bug report. */
   contextLostNote: string | null;
   /** Bumped after a lost graphics context comes back, so the canvas is rebuilt from scratch. */
@@ -102,6 +106,9 @@ interface UIState {
   pathPreview: boolean;
   /** Samples accumulated so far by the path-traced preview. */
   pathPreviewSamples: number;
+  /** Path traced preview holds its picture and stops adding samples. */
+  pathPaused: boolean;
+  setPathPaused: (paused: boolean) => void;
   dropActive: boolean;
   /** The Move tool: a handle in the viewport for moving or turning the selected part. */
   moveTool: boolean;
@@ -150,6 +157,7 @@ interface UIState {
   setRenderWindowPos(pos: { x: number; y: number } | null): void;
   setHotkeysOpen(open: boolean): void;
   setAboutOpen(open: boolean): void;
+  setTaleOpen(open: boolean): void;
   /** Put every window back where it starts. */
   setShowGrid(show: boolean): void;
   setShowLightHelpers(show: boolean): void;
@@ -208,6 +216,7 @@ export const useUI = create<UIState>((set, get) => ({
   renderWindowPos: null,
   hotkeysOpen: false,
   aboutOpen: false,
+  taleOpen: false,
 
   showGrid: true,
   showLightHelpers: false,
@@ -219,6 +228,7 @@ export const useUI = create<UIState>((set, get) => ({
   busyProgress: null,
   busyEstimate: null,
   contextLost: false,
+  contextLostCount: 0,
   contextLostNote: null,
   canvasEpoch: 0,
   dragMaterialId: null,
@@ -226,6 +236,7 @@ export const useUI = create<UIState>((set, get) => ({
   aimingLight: false,
   pathPreview: false,
   pathPreviewSamples: 0,
+  pathPaused: false,
   dropActive: false,
   moveTool: false,
   viewTool: 'select',
@@ -310,6 +321,9 @@ export const useUI = create<UIState>((set, get) => ({
   setAboutOpen(aboutOpen) {
     set({ aboutOpen });
   },
+  setTaleOpen(taleOpen) {
+    set({ taleOpen });
+  },
   toggleLeft() {
     set({ leftOpen: !get().leftOpen });
   },
@@ -342,7 +356,11 @@ export const useUI = create<UIState>((set, get) => ({
     set({ canvasEpoch: get().canvasEpoch + 1 });
   },
   setContextLost(contextLost, note) {
-    set({ contextLost, contextLostNote: contextLost ? (note ?? null) : null });
+    set((state) => ({
+      contextLost,
+      contextLostNote: contextLost ? (note ?? null) : null,
+      contextLostCount: contextLost ? state.contextLostCount + 1 : state.contextLostCount,
+    }));
   },
   setDragMaterial(dragMaterialId) {
     set({ dragMaterialId });
@@ -350,7 +368,10 @@ export const useUI = create<UIState>((set, get) => ({
   setPathPreview(pathPreview) {
     // -1 means "preparing the scene": the viewport is still drawn by the
     // rasteriser until the path tracer has built it.
-    set({ pathPreview, pathPreviewSamples: pathPreview ? -1 : 0 });
+    set({ pathPreview, pathPreviewSamples: pathPreview ? -1 : 0, pathPaused: false });
+  },
+  setPathPaused(pathPaused) {
+    set({ pathPaused });
   },
   setPathPreviewSamples(pathPreviewSamples) {
     set({ pathPreviewSamples });
