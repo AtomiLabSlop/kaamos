@@ -118,8 +118,8 @@ export function EnvironmentPanel() {
           onChange={(degrees) => updateEnvironment({ rotation: degrees / DEG }, 'env-rotation')}
           min={0}
           max={360}
-          step={1}
-          decimals={0}
+          step={0.1}
+          decimals={1}
           suffix="°"
           defaultValue={0}
         />

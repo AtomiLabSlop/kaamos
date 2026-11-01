@@ -312,8 +312,8 @@ export function MaterialPanel() {
               onChange={(mapRotation) => set({ mapRotation }, `material-${editingId}-rot`)}
               min={-180}
               max={180}
-              step={1}
-              decimals={0}
+              step={0.1}
+              decimals={1}
               suffix="°"
               defaultValue={0}
             />
@@ -360,8 +360,8 @@ export function MaterialPanel() {
           }
           min={0}
           max={180}
-          step={1}
-          decimals={0}
+          step={0.1}
+          decimals={1}
           suffix="°"
           disabled={def.anisotropy === 0}
         />

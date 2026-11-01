@@ -58,7 +58,7 @@ export function TaleDialog() {
       aria-modal="true"
       aria-label="The Tale of Kaamos"
       onClick={() => setOpen(false)}
-      className="fixed inset-0 z-[100] flex cursor-zoom-out items-center justify-center bg-black/45 p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
     >
       <div
         className="relative overflow-hidden rounded-2xl bg-[#1c1d1f] text-amber"
@@ -98,7 +98,7 @@ export function TaleDialog() {
             <p aria-label="1 star out of 5" style={{ margin: '0 0 2cqw', fontSize: '2.8cqw', letterSpacing: '0.3em', paddingLeft: '0.3em' }}>
               ★☆☆☆☆
             </p>
-            <div style={{ fontSize: '1.9cqw', lineHeight: 1.5, letterSpacing: '0.02em' }}>
+            <div style={{ fontSize: '1.9cqw', lineHeight: 1.5, letterSpacing: '0.02em', fontStyle: 'italic' }}>
               {QUOTES.map((quote) => (
                 <p key={quote} style={{ margin: '0 0 0.6cqw' }}>
                   “{quote}”

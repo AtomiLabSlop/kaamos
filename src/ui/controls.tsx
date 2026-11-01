@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type KeyboardEvent,
   type ReactNode,
 } from 'react';
 import {
@@ -470,6 +471,19 @@ export function EmptyNote({ children }: { children: ReactNode }) {
    Numeric input
  * ------------------------------------------------------------------ */
 
+/**
+ * A comma from the keyboard (or a Finnish numeric keypad) is typed as a decimal
+ * point: the field is set up for a point, and would otherwise drop the comma.
+ * The point goes in through the browser's own text insertion, so the field
+ * checks and handles it like any typed character.
+ */
+function commaAsPoint(event: KeyboardEvent<HTMLElement>) {
+  if (event.key !== ',' || event.ctrlKey || event.metaKey || event.altKey) return;
+  if (!(event.target instanceof HTMLInputElement)) return;
+  event.preventDefault();
+  document.execCommand('insertText', false, '.');
+}
+
 export function NumberInput({
   value,
   onChange,
@@ -496,7 +510,7 @@ export function NumberInput({
 }) {
   // Spectrum NumberField: commits on Enter or blur, arrow keys step by `step`.
   return (
-    <span className="inline-flex shrink-0 items-center gap-1">
+    <span className="inline-flex shrink-0 items-center gap-1" onKeyDownCapture={commaAsPoint}>
       <S2NumberField
         aria-label={label ?? (suffix ? `Value in ${suffix}` : 'Value')}
         size="S"
@@ -585,7 +599,7 @@ export function Slider({
         <Tip text={tip}>
           <span className={`truncate text-label ${disabled ? 'text-ink-faint' : 'text-ink-dim'}`}>{label}</span>
         </Tip>
-        <span className="inline-flex shrink-0 items-center gap-1">
+        <span className="inline-flex shrink-0 items-center gap-1" onKeyDownCapture={commaAsPoint}>
           <S2NumberField
             aria-label={label}
             size="S"
@@ -818,7 +832,7 @@ export function Vector3Field({
   return (
     <div className="flex flex-1 gap-1">
       {value.map((component, index) => (
-        <span key={index} className="flex min-w-0 flex-1 items-center gap-1">
+        <span key={index} className="flex min-w-0 flex-1 items-center gap-1" onKeyDownCapture={commaAsPoint}>
           <span className="text-label text-ink-faint">{labels[index]}</span>
           <S2NumberField
             aria-label={labels[index]}

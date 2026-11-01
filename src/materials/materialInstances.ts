@@ -51,6 +51,9 @@ function applyMaps(material: MeshPhysicalMaterial, def: MaterialDef) {
     const cached = textures.get(cacheKey);
 
     if (!ref || !image) {
+      // A normal map the path tracer borrowed for a bump image is not the
+      // material's own; leave it for the tracer's own restore to take back.
+      if (material[slot]?.userData?.standsInForBump) continue;
       if (cached) {
         cached.texture.dispose();
         textures.delete(cacheKey);

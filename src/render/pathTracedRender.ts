@@ -18,6 +18,7 @@ import {
 } from 'three';
 import { patchFocusPlane } from './focusPlane';
 import { patchSubsurface } from './subsurface';
+import { normalMapFromBump } from './bumpToNormal';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { releasePrintedSides } from '../scene/PrintedSide';
 import { hideForRender, isViewportReady, viewport } from '../scene/viewportApi';
@@ -218,6 +219,30 @@ export function prepareMaterials(
         restores.push(() => {
           volumetric.attenuationDistance = Infinity;
         });
+      }
+
+      /* The tracer has no bump maps, only normal maps, so a bump image would
+         vanish from the picture. For the duration of the trace it is stood in
+         for by a normal map made from it. The raster viewport's shader does not
+         change (no needsUpdate), so it never notices. */
+      const relief = material as {
+        bumpMap?: Texture | null;
+        normalMap?: Texture | null;
+        bumpScale?: number;
+        normalScale?: Vector2;
+      };
+      if (relief.bumpMap && !relief.normalMap && relief.normalScale) {
+        const stand = normalMapFromBump(relief.bumpMap);
+        if (stand) {
+          const { x, y } = relief.normalScale;
+          const scale = relief.normalScale;
+          relief.normalMap = stand;
+          scale.set(relief.bumpScale ?? 1, relief.bumpScale ?? 1);
+          restores.push(() => {
+            relief.normalMap = null;
+            scale.set(x, y);
+          });
+        }
       }
 
       const intensity = material.envMapIntensity;

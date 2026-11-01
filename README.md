@@ -96,6 +96,16 @@ A few decisions that shape the code:
 Kaamos is a side project. Bug reports and ideas are welcome as issues; pull
 requests are read, but may not be reviewed quickly.
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=atomilabslop%2Fkaamos&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=atomilabslop/kaamos&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=atomilabslop/kaamos&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=atomilabslop/kaamos&type=date&legend=top-left" />
+ </picture>
+</a>
+
 ## Licence
 
 Copyright (c) 2026 AtomiLab.

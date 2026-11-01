@@ -144,8 +144,8 @@ export function CameraPanel() {
             onChange={(fov) => updateCamera({ fov }, 'camera-fov')}
             min={8}
             max={90}
-            step={1}
-            decimals={0}
+            step={0.1}
+            decimals={1}
             suffix="°"
             defaultValue={35}
           />
