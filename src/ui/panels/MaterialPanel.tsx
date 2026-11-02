@@ -229,7 +229,7 @@ export function MaterialPanel() {
                 value={def.bumpScale}
                 onChange={(bumpScale) => set({ bumpScale }, `material-${editingId}-bump`)}
                 min={0}
-                max={5}
+                max={20}
                 step={0.05}
                 defaultValue={1}
               />

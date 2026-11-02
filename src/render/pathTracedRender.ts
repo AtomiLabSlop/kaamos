@@ -232,12 +232,12 @@ export function prepareMaterials(
         normalScale?: Vector2;
       };
       if (relief.bumpMap && !relief.normalMap && relief.normalScale) {
-        const stand = normalMapFromBump(relief.bumpMap);
+        const stand = normalMapFromBump(relief.bumpMap, relief.bumpScale ?? 1);
         if (stand) {
           const { x, y } = relief.normalScale;
           const scale = relief.normalScale;
           relief.normalMap = stand;
-          scale.set(relief.bumpScale ?? 1, relief.bumpScale ?? 1);
+          scale.set(1, 1); // the strength is built into the map
           restores.push(() => {
             relief.normalMap = null;
             scale.set(x, y);
