@@ -121,5 +121,8 @@ branding of another product or service.
 
 Third-party libraries keep their own licences, listed by their packages.
 
+## If you wish to support my work
+
 If you find my open-source projects useful, you can support the time and care that goes into maintaining and improving them by buying me a coffee. It’s entirely optional, but always appreciated :)
+
 [![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/atomilabslop)
