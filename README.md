@@ -96,6 +96,10 @@ A few decisions that shape the code:
 Kaamos is a side project. Bug reports and ideas are welcome as issues; pull
 requests are read, but may not be reviewed quickly.
 
+
+[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/atomilabslop)
+
+
 ## Star History
 
 <a href="https://www.star-history.com/?repos=atomilabslop%2Fkaamos&type=date&legend=top-left">
