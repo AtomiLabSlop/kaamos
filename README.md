@@ -127,4 +127,6 @@ Third-party libraries keep their own licences, listed by their packages.
 
 If you find my open-source projects useful, you can support the time and care that goes into maintaining and improving them by buying me a coffee. It’s entirely optional, but always appreciated :)
 
-[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/atomilabslop)
+<br>
+
+<a href="https://www.buymeacoffee.com/atomilabslop"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" width="200"></a>
