@@ -17,6 +17,9 @@ export const FEEDBACK_URL = 'https://tally.so/r/0VQWxA?system={system}';
 /** The public source (AGPL-3.0 asks that users of the hosted app can reach it). */
 export const SOURCE_URL = 'https://github.com/AtomiLabSlop/kaamos';
 
+/** Buy Me a Coffee page for supporting the project. Empty hides the section. */
+export const SUPPORT_URL = 'https://www.buymeacoffee.com/atomilabslop';
+
 /** What an early user should know before relying on Kaamos. Keep it short and true. */
 const LIMITATIONS: string[] = [
   'Desktop browsers only. Built and tested mostly in Chrome and Safari on a Mac; Windows, Linux and Firefox have had less testing.',
@@ -95,6 +98,32 @@ export function AboutDialog() {
             <p className="mt-1 rounded-sm bg-well px-1.5 py-1 font-mono text-label text-ink select-all">
               {system}
             </p>
+          </section>
+        )}
+
+        {SUPPORT_URL && (
+          <section>
+            <h3 className="mb-1 text-label text-ink-faint">Support me</h3>
+            <p>
+              If you find my open-source projects useful, you can support the time and care
+              that goes into maintaining and improving them by buying me a coffee. It’s entirely
+              optional, but always appreciated :)
+            </p>
+            <a
+              href={SUPPORT_URL}
+              target="_blank"
+              rel="noopener"
+              className="mt-2 inline-block hover:brightness-110"
+            >
+              <img
+                src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+                alt="Buy Me a Coffee"
+                width={200}
+                height={56}
+                referrerPolicy="no-referrer"
+                className="block h-auto"
+              />
+            </a>
           </section>
         )}
       </div>
