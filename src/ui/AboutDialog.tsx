@@ -49,16 +49,7 @@ export function AboutDialog() {
       onClose={close}
       size="L"
       closeOnOutsideClick
-      footer={
-        <>
-          {FEEDBACK_URL && (
-            <Button tone="primary" onClick={sendFeedback} tip="Opens the feedback form in a new tab">
-              Send feedback
-            </Button>
-          )}
-          <Button onClick={close}>Close</Button>
-        </>
-      }
+      dismissible={false}
     >
       <div className="flex flex-col gap-3">
         <p>
@@ -100,6 +91,15 @@ export function AboutDialog() {
             </p>
           </section>
         )}
+
+        <div className="mt-2 mb-4 flex gap-2">
+          {FEEDBACK_URL && (
+            <Button tone="primary" onClick={sendFeedback} tip="Opens the feedback form in a new tab">
+              Send feedback
+            </Button>
+          )}
+          <Button onClick={close}>Close</Button>
+        </div>
 
         {SUPPORT_URL && (
           <section>

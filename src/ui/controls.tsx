@@ -875,6 +875,7 @@ export function Modal({
   wide = false,
   size,
   closeOnOutsideClick = false,
+  dismissible,
 }: {
   title: string;
   children: ReactNode;
@@ -890,6 +891,11 @@ export function Modal({
    * off for questions, where a stray click should not answer for the user.
    */
   closeOnOutsideClick?: boolean;
+  /**
+   * Spectrum's close button in the corner. Defaults to on for a dialog without
+   * footer; a dialog that puts its own Close button in the content turns it off.
+   */
+  dismissible?: boolean;
 }) {
   useEffect(() => {
     if (!closeOnOutsideClick) return undefined;
@@ -907,7 +913,7 @@ export function Modal({
   return (
     <S2DialogContainer onDismiss={onClose}>
       <S2Dialog
-        isDismissible={!footer}
+        isDismissible={dismissible ?? !footer}
         size={size ?? (wide ? 'M' : 'S')}
       >
         <S2Heading slot="title">{title}</S2Heading>
