@@ -97,6 +97,8 @@ export interface PathTracedOptions {
    * then counts only the ones still to do; the two are averaged at the end.
    */
   resume?: RenderCheckpoint | null;
+  /** How many times this render has already been resumed; each halves the tile size. */
+  resumeCount?: number;
 }
 
 export interface PathTracedOutput {
@@ -427,15 +429,21 @@ function logMaterialTable(scene: Scene, elapsedMs: number, tracer: unknown) {
  * the final render and the path traced preview, whose tiles used to be the
  * library's fixed 3 x 3 and so grew with the window.
  */
-export function tilesPerSideFor(width: number, height: number, triangles = 0): number {
-  const base = isWebKitBrowser() ? 60000 : 200000;
+export function tilesPerSideFor(
+  width: number,
+  height: number,
+  triangles = 0,
+  /** Pixels per tile before the heavy-scene shrink; the preview leaves it to the browser. */
+  basePixels = isWebKitBrowser() ? 60000 : 200000,
+): number {
+  const base = basePixels;
   // A heavy scene makes every pixel dearer, so a tile must be smaller to stay
   // under the browser's limit on one piece of GPU work: above half a million
   // triangles the budget shrinks in proportion (a 2.3 M triangle scene with
   // 119 textures lost Chrome's graphics context at 200 000 pixels a tile).
   const heavy = triangles > 500000 ? 500000 / triangles : 1;
-  const tilePixels = Math.max(30000, base * heavy);
-  return Math.min(14, Math.max(3, Math.ceil(Math.sqrt((width * height) / tilePixels))));
+  const tilePixels = Math.max(15000, base * heavy);
+  return Math.min(16, Math.max(3, Math.ceil(Math.sqrt((width * height) / tilePixels))));
 }
 
 /** Triangles in the visible meshes of a scene. */
@@ -628,7 +636,16 @@ export async function renderPathTraced(
        pixels each, through glass). Smaller tiles keep each piece short, at the
        price of more frames per sample, so a render takes longer. Chrome coped
        with the 3 x 3 default, so only WebKit browsers get the small tiles. */
-    const tilesPerSide = tilesPerSideFor(width, height, countTriangles(scene));
+    /* Final renders use the small tiles in every browser: a long render lost
+       Chrome's graphics context on an M2 Pro with the 200 000 pixel tiles
+       (871 of 1024 samples, 1280 x 544), and Chrome may refuse the page a new
+       context after a second loss. A resumed render halves the tiles again. */
+    const tilesPerSide = tilesPerSideFor(
+      width,
+      height,
+      countTriangles(scene),
+      60000 / 2 ** (options.resumeCount ?? 0),
+    );
     tracer.tiles.set(tilesPerSide, tilesPerSide);
     // Importance sampling aims rays at the lights rather than hoping to hit
     // them, which is most of what keeps a small bright source from producing

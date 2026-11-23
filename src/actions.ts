@@ -756,6 +756,7 @@ export async function runRender() {
           signal,
           onProgress,
           resume,
+          resumeCount: attempt,
         });
       } catch (error) {
         if (!(error instanceof RenderContextLost) || attempt >= MAX_RENDER_RESUMES) throw error;

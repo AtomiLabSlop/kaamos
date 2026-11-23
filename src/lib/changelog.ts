@@ -11,6 +11,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.01.2',
+    date: '23 Nov 2026',
+    changes: [
+      'Path traced renders split each sample into smaller pieces in every browser, so the graphics chip is less likely to reset on a long render.',
+    ],
+  },
+  {
     version: '2.01.1',
     date: '23 Nov 2026',
     changes: [
