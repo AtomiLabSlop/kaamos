@@ -83,6 +83,10 @@ export function CameraRig() {
         position: [camera.position.x, camera.position.y, camera.position.z],
         target: [controls.target.x, controls.target.y, controls.target.z],
       };
+      // Also kept outside the canvas, so any rebuilt canvas (a lost graphics
+      // context, or the retry after a canvas that failed to start) opens on
+      // the view the user left rather than the default one.
+      savedPose.value = pose.current;
     };
     controls.addEventListener('change', record);
     record();

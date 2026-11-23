@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useProject, useRootIds } from '../store/project';
@@ -127,14 +127,21 @@ function MaterialSync() {
   return null;
 }
 
+/**
+ * How many models the scene held when AutoFrame last looked. Kept outside the
+ * component so a canvas rebuilt after a lost graphics context does not take its
+ * own first look for "something appeared in an empty scene" and reframe the
+ * view, which threw away the camera the user had set (and the focus with it).
+ */
+const autoFrameSeen = { count: 0 };
+
 /** Frames the subject the first time anything appears in an empty scene. */
 function AutoFrame() {
   const count = useProject((state) => state.modelOrder.length);
-  const previous = useRef(0);
 
   useEffect(() => {
-    const wasEmpty = previous.current === 0;
-    previous.current = count;
+    const wasEmpty = autoFrameSeen.count === 0;
+    autoFrameSeen.count = count;
     if (!wasEmpty || count === 0) return;
     const frame = requestAnimationFrame(() => frameAll());
     return () => cancelAnimationFrame(frame);
