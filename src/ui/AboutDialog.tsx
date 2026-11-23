@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useUI } from '../store/ui';
 import { APP_VERSION } from '../lib/version';
 import { systemInfoLine } from '../lib/systemInfo';
+import { CHANGELOG } from '../lib/changelog';
 import { Button, Modal } from './controls';
 
 /**
@@ -20,15 +21,22 @@ export const SOURCE_URL = 'https://github.com/AtomiLabSlop/kaamos';
 /** Buy Me a Coffee page for supporting the project. Empty hides the section. */
 export const SUPPORT_URL = 'https://www.buymeacoffee.com/atomilabslop';
 
-/** What an early user should know before relying on Kaamos. Keep it short and true. */
+/** Where things can go wrong. Keep it short and true. */
 const LIMITATIONS: string[] = [
-  'Desktop browsers only. Built and tested mostly in Chrome and Safari on a Mac; Windows, Linux and Firefox have had less testing.',
-  'Path traced renders lean on the graphics chip. On weak or integrated graphics a large scene or a large output can lose the graphics context; use fewer samples or a smaller size.',
-  'Models over about a million triangles make the view slow, and a large import pauses the page while it is read.',
-  'Subsurface scattering (wax, skin, jade, marble, milk) is new, shows only in path traced views, and needs closed meshes.',
-  'Glass seen through glass, and light cast by glowing materials, show only in path traced views.',
-  'Textures that come with an imported file are kept, but the material editor cannot show or edit them; giving the part a library material replaces them.',
-  'Your work is saved as a project file on your own computer. The automatic backup lives only in this browser.',
+  'Desktop browsers only, tested mostly in Chrome and Safari on a Mac.',
+  'Path tracing leans on the graphics chip. A large scene, a large output or a long render can make it reset; a render then carries on from where it was.',
+  'Models over about a million triangles slow the view, and a large import pauses the page.',
+  'Subsurface scattering, glass seen through glass and light from glowing materials show only in path traced views.',
+  'Textures that come with an imported file are kept but cannot be edited.',
+  'Projects are saved as files on your computer; the automatic backup lives only in this browser.',
+];
+
+/** Ideas, not promises. */
+const MAYBE_LATER: string[] = [
+  'Editing the textures that come with an imported file.',
+  'Turntable animations.',
+  'Faster path tracing on WebGPU.',
+  'A smoother view for very large models.',
 ];
 
 export function AboutDialog() {
@@ -53,12 +61,10 @@ export function AboutDialog() {
     >
       <div className="flex flex-col gap-3">
         <p>
-          Kaamos is a product rendering studio that runs in your browser: import a model,
-          give it materials, light it and render an image.{' '}
-          <span className="text-ink">
-            Your models never leave this computer; nothing is uploaded.
-          </span>{' '}
-          Kaamos is open source (AGPL-3.0):{' '}
+          Product renders in your browser: import a model, give it materials and light, render a
+          high-resolution image.{' '}
+          <span className="text-ink">Your models stay on this computer; nothing is uploaded.</span>{' '}
+          Open source (AGPL-3.0):{' '}
           <a
             href={SOURCE_URL}
             target="_blank"
@@ -71,12 +77,40 @@ export function AboutDialog() {
         </p>
 
         <section>
-          <h3 className="mb-1 text-label text-ink-faint">Early version — known limitations</h3>
+          <h3 className="mb-1 text-label text-ink-faint">Known limitations</h3>
           <ul className="flex list-disc flex-col gap-1 pl-4">
             {LIMITATIONS.map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ul>
+        </section>
+
+        <section>
+          <h3 className="mb-1 text-label text-ink-faint">Maybe later</h3>
+          <ul className="flex list-disc flex-col gap-1 pl-4">
+            {MAYBE_LATER.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="mb-1 text-label text-ink-faint">What’s new</h3>
+          <div className="flex flex-col gap-2">
+            {CHANGELOG.map((entry) => (
+              <div key={entry.version}>
+                <p className="text-ink">
+                  {entry.version}
+                  <span className="text-ink-faint"> · {entry.date}</span>
+                </p>
+                <ul className="flex list-disc flex-col gap-0.5 pl-4">
+                  {entry.changes.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </section>
 
         {FEEDBACK_URL && (

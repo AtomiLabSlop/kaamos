@@ -1,6 +1,10 @@
 import {
   Color,
+  DataTexture,
   DataUtils,
+  FloatType,
+  NearestFilter,
+  RGBAFormat,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
@@ -24,7 +28,7 @@ import { releasePrintedSides } from '../scene/PrintedSide';
 import { hideForRender, isViewportReady, viewport } from '../scene/viewportApi';
 import { nextFrame } from '../lib/util';
 import { encodePng, readTarget } from './encodeImage';
-import { RenderAborted, RenderError } from './renderErrors';
+import { RenderAborted, RenderContextLost, RenderError, type RenderCheckpoint } from './renderErrors';
 import { splitMultiMaterialMeshes } from './splitMultiMaterial';
 import { DENOISE_PRESETS, type DenoiseStrength, createDenoiseMaterial, createDespeckleMaterial } from './denoise';
 
@@ -88,6 +92,11 @@ export interface PathTracedOptions {
   lens?: { bokehSize: number; focusDistance: number } | null;
   onProgress?: (sample: number, total: number, stage: string) => void;
   signal?: AbortSignal;
+  /**
+   * Samples already traced before the graphics context was lost. `samples`
+   * then counts only the ones still to do; the two are averaged at the end.
+   */
+  resume?: RenderCheckpoint | null;
 }
 
 export interface PathTracedOutput {
@@ -111,6 +120,36 @@ export const loadPathTracer = () => (modulePromise ??= import('three-gpu-pathtra
  */
 const isCompiling = (tracer: object) =>
   Boolean((tracer as { isCompiling?: boolean }).isCompiling);
+
+/**
+ * How often (in samples) the accumulated picture is copied off the GPU, so a
+ * render whose graphics context is lost can carry on from there. A copy of a
+ * 1280 × 960 float picture is about 20 MB and takes a few milliseconds.
+ */
+const CHECKPOINT_EVERY = 32;
+
+/** Weighted average of two accumulated pictures, written into `out`. */
+function mergeAccumulated(
+  a: Float32Array,
+  aSamples: number,
+  b: Float32Array,
+  bSamples: number,
+  out: Float32Array,
+) {
+  const total = aSamples + bSamples;
+  const wa = total > 0 ? aSamples / total : 0;
+  const wb = total > 0 ? bSamples / total : 0;
+  for (let i = 0; i < out.length; i++) out[i] = a[i] * wa + b[i] * wb;
+}
+
+/**
+ * The library's material: its `seed` numbers the sample, which drives both the
+ * per-pixel random numbers and the Sobol sequence. A resumed render starts it
+ * where the lost one stopped, so it traces new paths rather than the same ones
+ * again (which would add nothing but weight to the first samples).
+ */
+const tracerMaterial = (tracer: object) =>
+  (tracer as { _pathTracer?: { material?: { seed: number } } })._pathTracer?.material;
 
 /**
  * Resolves the tracer's accumulated float buffer into a displayable image.
@@ -454,12 +493,20 @@ export async function renderPathTraced(
   const width = Math.max(1, Math.round(options.width));
   const height = Math.max(1, Math.round(options.height));
   const samples = Math.max(1, Math.round(options.samples));
+  // A resumed render reports the whole count, including what was done before
+  // the graphics context was lost.
+  const resume =
+    options.resume && options.resume.width === Math.max(1, Math.round(options.width)) &&
+    options.resume.height === Math.max(1, Math.round(options.height))
+      ? options.resume
+      : null;
+  const before = resume?.samples ?? 0;
   // The last stage reported, so a failure that carries no message of its own
   // can at least say where it happened.
   let stage = 'Starting';
   const report = (done: number, total: number, label: string) => {
     stage = label;
-    options.onProgress?.(done, total, label);
+    options.onProgress?.(before + done, before + total, before && label.startsWith('Sample') ? `Sample ${before + done} of ${before + total}` : label);
   };
   const started = performance.now();
 
@@ -516,6 +563,7 @@ export async function renderPathTraced(
   let output: WebGLRenderTarget | null = null;
   let quad: FullScreenQuad | null = null;
   let despeckled: WebGLRenderTarget | null = null;
+  let mergedTexture: DataTexture | null = null;
 
   try {
     /* ---- the tracer sizes itself from the drawing buffer ----
@@ -648,6 +696,29 @@ export async function renderPathTraced(
     // That can happen again mid-render and, for a glass scene on Safari, take
     // longer than a couple of hundred frames; so stalling is judged in
     // seconds, not calls.
+    const material = tracerMaterial(tracer);
+    if (material && before > 0) material.seed += before;
+
+    // Checkpoints: the accumulated picture so far, merged with what a lost
+    // render had done before, kept on the CPU where a lost context cannot take it.
+    const pixels = width * height * 4;
+    let checkpoint: RenderCheckpoint | null = resume;
+    let readBuffer: Float32Array | null = null;
+    let nextCheckpoint = CHECKPOINT_EVERY;
+    const readAccumulated = () => {
+      readBuffer ??= new Float32Array(pixels);
+      gl.readRenderTargetPixels(tracer!.target, 0, 0, width, height, readBuffer);
+      return readBuffer;
+    };
+    const takeCheckpoint = (done: number) => {
+      const current = readAccumulated();
+      const data = new Float32Array(pixels);
+      if (resume) mergeAccumulated(resume.data, resume.samples, current, done, data);
+      else data.set(current);
+      checkpoint = { width, height, samples: before + done, data };
+    };
+    const lost = (message: string) => new RenderContextLost(message, checkpoint);
+
     let lastProgress = performance.now();
     let lastSamples = tracer.samples;
     while (tracer.samples < samples) {
@@ -657,8 +728,8 @@ export async function renderPathTraced(
       // was lost halfway carries on counting and ends as a flat grey picture.
       // Stop the moment the context is gone, and say so.
       if (gl.getContext().isContextLost()) {
-        throw new RenderError(
-          `The graphics context was lost after about ${Math.floor(tracer.samples)} of ${samples} ` +
+        throw lost(
+          `The graphics context was lost after about ${before + Math.floor(tracer.samples)} of ${before + samples} ` +
             'samples (the GPU reset, usually because the picture is large or the render long). ' +
             'Try a smaller output size or fewer samples.',
         );
@@ -666,6 +737,10 @@ export async function renderPathTraced(
       tracer.renderSample();
       const done = Math.min(Math.floor(tracer.samples), samples);
       report(done, samples, `Sample ${done} of ${samples}`);
+      if (done >= nextCheckpoint && done < samples && !gl.getContext().isContextLost()) {
+        takeCheckpoint(done);
+        nextCheckpoint = done + CHECKPOINT_EVERY;
+      }
 
       // Hand the frame back so the progress bar moves and Cancel stays live.
       await nextFrame();
@@ -677,7 +752,7 @@ export async function renderPathTraced(
       } else if (now - lastProgress > 5000) {
         // A lost graphics context leaves a compile that never finishes.
         if (gl.getContext().isContextLost()) {
-          throw new RenderError(
+          throw lost(
             'The graphics context was lost during the render (the GPU reset, ' +
               'usually because a frame was too heavy). Try a smaller output size ' +
               'or fewer samples, or switch the engine back to Accumulated raster.',
@@ -698,6 +773,19 @@ export async function renderPathTraced(
        this pass to keep it from being applied a second time. */
     report(samples, samples, options.denoise ? 'Denoising' : 'Encoding PNG');
 
+    // A resumed render: average what this run traced with what the lost one had,
+    // weighted by their sample counts, and resolve that instead.
+    let accumulated: Texture = tracer.target.texture;
+    if (resume) {
+      const merged = new Float32Array(pixels);
+      mergeAccumulated(resume.data, resume.samples, readAccumulated(), samples, merged);
+      mergedTexture = new DataTexture(merged, width, height, RGBAFormat, FloatType);
+      mergedTexture.minFilter = NearestFilter;
+      mergedTexture.magFilter = NearestFilter;
+      mergedTexture.needsUpdate = true;
+      accumulated = mergedTexture;
+    }
+
     output = new WebGLRenderTarget(width, height, {
       type: UnsignedByteType,
       colorSpace: SRGBColorSpace,
@@ -710,13 +798,13 @@ export async function renderPathTraced(
     let resolveMaterial: ShaderMaterial;
     if (options.denoise) {
       const preset = DENOISE_PRESETS[options.denoiseStrength ?? 'medium'];
-      let source: Texture = tracer.target.texture;
+      let source: Texture = accumulated;
       if (preset.despeckle) {
         // Firefly pass first: it clips isolated bright samples (light that
         // reached the camera through glass by chance) so the blur has nothing
         // to smear. Half float keeps the radiance unclamped between passes.
         despeckled = new WebGLRenderTarget(width, height, { type: HalfFloatType, depthBuffer: false });
-        const dq = new FullScreenQuad(createDespeckleMaterial(tracer.target.texture, preset.despeckle));
+        const dq = new FullScreenQuad(createDespeckleMaterial(accumulated, preset.despeckle));
         gl.setRenderTarget(despeckled);
         dq.render(gl);
         dq.material.dispose();
@@ -730,7 +818,7 @@ export async function renderPathTraced(
         preset.denoise,
       );
     } else {
-      resolveMaterial = createResolveMaterial(tracer.target.texture);
+      resolveMaterial = createResolveMaterial(accumulated);
     }
 
     // The resolve shaders read `toneMapping` as a shader define, so it has to
@@ -769,7 +857,7 @@ export async function renderPathTraced(
       url: URL.createObjectURL(blob),
       width,
       height,
-      samples,
+      samples: before + samples,
       durationMs: performance.now() - started,
     };
   } catch (error) {
@@ -787,6 +875,7 @@ export async function renderPathTraced(
     quad?.dispose();
     output?.dispose();
     despeckled?.dispose();
+    mergedTexture?.dispose();
     tracer?.dispose();
     restoreMaterials();
     restoreHelpers();

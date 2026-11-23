@@ -48,7 +48,7 @@ import {
 } from './io/projectFile';
 import { renderFinal } from './render/finalRender';
 import { renderPathTraced } from './render/pathTracedRender';
-import { RenderAborted } from './render/renderErrors';
+import { RenderAborted, RenderContextLost, type RenderCheckpoint } from './render/renderErrors';
 import {
   applyCameraState,
   applyViewDirection,
@@ -57,6 +57,7 @@ import {
   frameNode,
   frameNodes,
   hideForRender,
+  isViewportReady,
   readCameraState,
   requestRedraw,
   targetDistance,
@@ -665,6 +666,45 @@ export function togglePathPreview() {
   }
 }
 
+/** How many times one render may carry on after the graphics context is lost. */
+const MAX_RENDER_RESUMES = 3;
+
+/** Meshes in the live scene: a rebuilt canvas has its models back when this is. */
+function liveMeshCount() {
+  let count = 0;
+  viewport.scene?.traverse((object) => {
+    if ((object as { isMesh?: boolean }).isMesh) count += 1;
+  });
+  return count;
+}
+
+/**
+ * After a lost graphics context the app rebuilds the canvas (`SceneRoot`).
+ * Waits for that: a new, working context, the scene's meshes back, and a
+ * moment for the environment and materials to be drawn into their buffers.
+ */
+async function waitForRebuiltView(epoch: number, meshes: number, signal: AbortSignal) {
+  const started = performance.now();
+  while (performance.now() - started < 45000) {
+    if (signal.aborted) throw new RenderAborted('Render cancelled');
+    const state = ui();
+    const gl = viewport.gl;
+    if (
+      !state.contextLost &&
+      state.canvasEpoch > epoch &&
+      isViewportReady() &&
+      gl &&
+      !gl.getContext().isContextLost() &&
+      liveMeshCount() >= meshes
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  return false;
+}
+
 export async function runRender() {
   if (controller) return;
 
@@ -693,21 +733,55 @@ export async function runRender() {
   const onProgress = (sample: number, count: number, stage: string) =>
     ui().setRenderProgress({ active: true, sample, total: count, stage });
 
-  try {
-    const output = tracing
-      ? await renderPathTraced({
+  const signal = controller.signal;
+  /* A path traced render whose graphics context is lost carries on from its
+     last checkpoint once the canvas has been rebuilt, rather than ending with
+     an error; the camera survives the rebuild (`savedPose`). */
+  const tracePath = async () => {
+    let resume: RenderCheckpoint | null = null;
+    for (let attempt = 0; ; attempt++) {
+      const epoch = ui().canvasEpoch;
+      const meshes = liveMeshCount();
+      try {
+        return await renderPathTraced({
           width: settings.width,
           height: settings.height,
-          samples: settings.pathSamples,
+          samples: settings.pathSamples - (resume?.samples ?? 0),
           bounces: settings.bounces,
           denoise: settings.denoise,
           denoiseStrength: settings.denoiseStrength,
           transparentBackground: settings.transparentBackground,
           orthoZoom: camera.orthoZoom,
           lens: lens ? { bokehSize: lens.bokehSize, focusDistance: lens.focusDistance } : null,
-          signal: controller.signal,
+          signal,
           onProgress,
-        })
+          resume,
+        });
+      } catch (error) {
+        if (!(error instanceof RenderContextLost) || attempt >= MAX_RENDER_RESUMES) throw error;
+        resume = error.checkpoint ?? resume;
+        const kept = resume?.samples ?? 0;
+        ui().setRenderProgress({
+          active: true,
+          sample: kept,
+          total: settings.pathSamples,
+          stage: 'Graphics reset, waiting for the view to come back',
+        });
+        ui().toast(
+          'warn',
+          'Graphics reset during the render',
+          kept > 0
+            ? `Carrying on from sample ${kept} of ${settings.pathSamples} once the view is back.`
+            : 'Starting the render again once the view is back.',
+        );
+        if (!(await waitForRebuiltView(epoch, meshes, signal))) throw error;
+      }
+    }
+  };
+
+  try {
+    const output = tracing
+      ? await tracePath()
       : await renderFinal({
           width: settings.width,
           height: settings.height,

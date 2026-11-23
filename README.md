@@ -84,8 +84,9 @@ A few decisions that shape the code:
 ## Known limitations
 
 - Desktop browsers only. Tested mostly in Chrome and Safari on macOS.
-- Path traced renders depend on the graphics chip; on integrated graphics a
-  large scene or output can lose the graphics context.
+- Path traced renders depend on the graphics chip; a large scene, a large
+  output or a long render can make it reset. A render then carries on from its
+  last checkpoint (since 2.01.1) rather than failing.
 - Models over about a million triangles make the view slow.
 - Subsurface scattering, glass seen through glass and light from glowing
   materials show only in path traced views.
